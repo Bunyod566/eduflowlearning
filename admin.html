@@ -1363,7 +1363,17 @@ function atcRender() {
         <input id="atc-pass" type="password" required placeholder="Parol" class="${inp} flex-1 min-w-[120px]">
         <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold rounded-lg text-sm transition">Kirish</button></form>`;
     else if (atcState === 'loading') body = `<p class="text-sm text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Yuklanmoqda...</p>`;
-    else if (atcState === 'denied') body = `<p class="text-sm text-red-600">Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing va Publish qiling.</p>`;
+    else if (atcState === 'denied') {
+        const em = String(adminFbUser.email || '').toLowerCase();
+        body = `<div class="text-sm space-y-2">
+            <p class="text-red-600 font-semibold">Ruxsat yo'q: Firestore ustoz kurslarini ko'rsatmayapti.</p>
+            <p class="text-gray-600 dark:text-gray-300">Siz Firebase'ga <b>${escapeHtml(em)}</b> sifatida kirgansiz. Qoidalardagi admin email: <b>admin@eduflow.uz</b>.</p>
+            ${em === 'admin@eduflow.uz'
+                ? `<p class="text-gray-600 dark:text-gray-300">Email to'g'ri. Demak qoidalar hali kuchga kirmagan: Firebase Console > Firestore Database > Rules da ustozlar qoidalari borligini tekshiring va <b>Publish</b> ni bosing, so'ng sahifani yangilang.</p>`
+                : `<p class="text-gray-600 dark:text-gray-300">Email boshqa. Yoki shu tugma bilan chiqib, admin@eduflow.uz bilan kiring, yoki Rules'dagi <code>admin@eduflow.uz</code> ni <b>${escapeHtml(em)}</b> ga almashtirib Publish qiling.</p>`}
+            <button type="button" onclick="acmSignOut()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-bold text-xs">Firebase admin akkauntidan chiqish</button>
+        </div>`;
+    }
     else if (atcState === 'error') body = `<p class="text-sm text-red-600">Kurslarni yuklab bo'lmadi. Internet aloqasini tekshiring.</p>`;
     else if (!atcList.length) body = `<p class="text-sm text-gray-500 dark:text-gray-400">Tekshiruvni kutayotgan kurs yo'q. Ustoz kursni yuborganda u shu yerda darhol paydo bo'ladi.</p>`;
     else body = atcList.map(c => `
