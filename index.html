@@ -310,7 +310,7 @@
                     id="nav-tasks">Topshiriqlar</a>
                 <a href="#/contact" class="hover:text-blue-600 dark:hover:text-blue-400 transition"
                     id="nav-contact">Aloqa</a>
-                <a href="#/teacher" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Ustozlar uchun</a>
+                <a href="teacher.html" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Ustozlar uchun</a>
             </nav>
 
             <!-- Actions Right -->
@@ -1008,10 +1008,10 @@ let isDarkMode = localStorage.getItem('eduflow_theme') === 'dark';
 let currentLang = localStorage.getItem('eduflow_lang') || 'uz';
 // ===== YAGONA FAYL: HASH MARSHRUTLASH =====
 // Manzillar: #/ (bosh), #/catalog, #/catalog/Dizayn, #/course/5, #/pricing, #/profile, #/tasks, #/contact,
-// #/teacher, #/teacher-courses, #/teacher-edit[/id], #/teacher-profile. To'lovdan qaytish: /payment.html?order=...
+// Ustozlar sayti alohida fayl: teacher.html. To'lovdan qaytish: /payment.html?order=...
 let PAGE_VIEW = 'home';
 let bootIsPayment = /payment\.html$/i.test(location.pathname);
-const ROUTE_NAMES = { '': 'home', catalog: 'catalog', pricing: 'pricing', course: 'details', profile: 'profile', tasks: 'tasks', contact: 'contact', payment: 'payment', teacher: 'teacher', 'teacher-courses': 'teacher-courses', 'teacher-edit': 'teacher-edit', 'teacher-profile': 'teacher-profile' };
+const ROUTE_NAMES = { '': 'home', catalog: 'catalog', pricing: 'pricing', course: 'details', profile: 'profile', tasks: 'tasks', contact: 'contact', payment: 'payment' };
 function parseRoute() {
     if (bootIsPayment) {
         if (!location.hash) return { view: 'payment', arg: '' };
@@ -1586,10 +1586,7 @@ function navigateTo(view, param = null) {
 function applyRoute() {
     const r = parseRoute();
     PAGE_VIEW = r.view; currentView = r.view;
-    if (r.view.startsWith('teacher')) {
-        if (window.teacherShow) window.teacherShow(r.view);
-    } else {
-        if (window.teacherLeave) window.teacherLeave();
+    {
         renderView(r.view, r.view === 'details' ? (parseInt(r.arg) || 1) : null);
         if (r.view === 'catalog' && r.arg && categories.includes(r.arg)) {
             const sel = document.getElementById('category-filter');
@@ -1609,7 +1606,6 @@ window.pageTitle = function (l) {
         return c ? c.title + ' - EduFlow' : null;
     }
     if (PAGE_VIEW === 'payment') return (payText[l] || payText.uz).resultTitle + ' - EduFlow';
-    if (PAGE_VIEW.startsWith('teacher')) return 'Ustozlar - EduFlow';
     const map = { catalog: t.navCatalog, pricing: t.navPricing, tasks: t.navTasks, contact: t.navContact };
     return map[PAGE_VIEW] ? map[PAGE_VIEW] + ' - EduFlow' : null;
 };
@@ -3399,342 +3395,6 @@ function handleEditNameSubmit(e) {
     closeEditNameModal();
     navigateTo(currentView, selectedCourseId);
 }
-// ===== USTOZLAR SAHIFALARI (#/teacher...) =====
-window.teacherShow = (function () {
-let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
-
-        const $ = s => document.querySelector(s);
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const money = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + " so'm";
-        const CATS = ["Dasturlash", "Dizayn", "Biznes", "Chet tillari", "SMM & Marketing"];
-        const LEVELS = ["Boshlang'ich", "O'rta", "Yuqori"];
-        const ST = { draft: ['Qoralama', 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-200'], pending: ['Tekshiruvda', 'bg-amber-100 text-amber-800'], approved: ['Tasdiqlangan', 'bg-emerald-100 text-emerald-800'], rejected: ['Rad etilgan', 'bg-rose-100 text-rose-800'] };
-        const ERR = {
-            'auth/invalid-credential': "Email yoki parol noto'g'ri.", 'auth/wrong-password': "Parol noto'g'ri.", 'auth/user-not-found': "Bunday akkaunt topilmadi.",
-            'auth/email-already-in-use': "Bu email bilan akkaunt bor. \"Kirish\" orqali davom eting.", 'auth/weak-password': "Parol kamida 6 belgidan iborat bo'lsin.",
-            'auth/invalid-email': "Email manzili noto'g'ri.", 'auth/too-many-requests': "Juda ko'p urinish. Birozdan so'ng qayta urinib ko'ring.",
-            'auth/network-request-failed': "Internet aloqasi yo'q.", 'auth/operation-not-allowed': "Firebase'da Email/Parol usuli yoqilmagan (TEACHER-SETUP.md ga qarang)."
-        };
-
-        function fsErr(x) {
-            const c = x && x.code;
-            if (c === 'permission-denied') return "Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing (README.md, \"Ustozlar sayti: sozlash\").";
-            if (c === 'unavailable') return "Internet aloqasi yo'q.";
-            if (c === 'invalid-argument') return "Ma'lumotda xato bor (rasm juda katta bo'lishi mumkin).";
-            return (x && x.message) || c || '';
-        }
-        let me = null, prof = {}, courses = [], view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile' })[PAGE_VIEW] || 'home', ed = null, unsub = null, pendingName = '', mode = 'login';
-
-        function toast(msg, bad) {
-            const t = $('#toast'); t.textContent = msg; t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold text-white z-50 ' + (bad ? 'bg-rose-600' : 'bg-emerald-600');
-            clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hidden'), 3500);
-        }
-
-        // ===== KIRISH =====
-        function setMode(m) {
-            mode = m; $('#a-name-w').classList.toggle('hidden', m !== 'register'); $('#a-code-w').classList.toggle('hidden', m !== 'register');
-            $('#a-go').textContent = m === 'register' ? "Ro'yxatdan o'tish" : 'Kirish';
-            $('#a-pass').autocomplete = m === 'register' ? 'new-password' : 'current-password';
-            $('#t-login').className = 'flex-1 tbtn ' + (m === 'login' ? 'bg-white dark:bg-gray-800 shadow' : '');
-            $('#t-register').className = 'flex-1 tbtn ' + (m === 'register' ? 'bg-white dark:bg-gray-800 shadow' : '');
-            $('#a-err').textContent = '';
-        }
-        async function authGo(e) {
-            e.preventDefault(); $('#a-err').textContent = '';
-            const em = $('#a-email').value.trim(), pw = $('#a-pass').value;
-            try {
-                if (mode === 'register') {
-                    pendingName = $('#a-name').value.trim();
-                    if (!pendingName) throw { message: 'Ism va familiyangizni kiriting.' };
-                    if (!sent || sent.email !== em.toLowerCase() || Date.now() > sent.exp || $('#a-code').value.replace(/\D/g, '') !== sent.code) throw { message: "Emailga kelgan kodni to'g'ri kiriting." };
-                    await auth.createUserWithEmailAndPassword(em, pw);
-                } else await auth.signInWithEmailAndPassword(em, pw);
-            } catch (x) { $('#a-err').textContent = ERR[x.code] || x.message; }
-        }
-        async function forgot() {
-            const em = $('#a-email').value.trim();
-            if (!em) { $('#a-err').textContent = 'Avval email manzilingizni kiriting.'; return; }
-            try { await auth.sendPasswordResetEmail(em); toast('Parolni tiklash havolasi emailga yuborildi.'); }
-            catch (x) { $('#a-err').textContent = ERR[x.code] || x.message; }
-        }
-
-        const onTeacherPage = () => PAGE_VIEW.startsWith('teacher');
-        function enterView() {
-            if (unsub) { unsub(); unsub = null; }
-            if (view === 'home' || view === 'courses') unsub = db.collection('teacherCourses').where('ownerUid', '==', me.uid).onSnapshot(s => {
-                courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-                if (view !== 'edit' && onTeacherPage()) render();
-            }, x => toast("Kurslarni yuklab bo'lmadi. " + fsErr(x), true));
-            showShell(); initView();
-        }
-        function startAuth() {
-            auth.onAuthStateChanged(async u => {
-                authReady = false;
-                if (unsub) { unsub(); unsub = null; }
-                if (!u) { me = null; authReady = true; if (onTeacherPage()) showAuth(); return; }
-                if ((u.email || '').toLowerCase() === 'admin@eduflow.uz') {
-                    adminMsg = "Bu admin akkaunti. Admin paneldan foydalaning."; await auth.signOut(); return;
-                }
-                me = u;
-                const ref = db.collection('teachers').doc(u.uid);
-                try {
-                    const d = await ref.get();
-                    if (d.exists) prof = d.data();
-                    else {
-                        prof = { name: pendingName || u.email.split('@')[0], email: u.email, specialty: '', experience: 0, bio: '', photo: '', createdAt: new Date().toISOString() };
-                        await ref.set(prof);
-                    }
-                } catch (x) { prof = { name: pendingName || u.email.split('@')[0], email: u.email }; toast("Profilni o'qib bo'lmadi. " + fsErr(x), true); }
-                if (!prof.name) prof.name = u.email.split('@')[0];
-                authReady = true;
-                if (onTeacherPage()) enterView();
-            });
-        }
-
-        // ===== NAVIGATSIYA =====
-        const TP = { home: 'teacher', courses: 'teacher-courses', edit: 'teacher-edit', profile: 'teacher-profile' };
-        function go(v, id) { location.hash = '#/' + TP[v] + (id ? '/' + encodeURIComponent(id) : ''); }
-        function render() {
-            document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (view === 'edit' ? 'courses' : view)));
-            if ($('#who')) $('#who').textContent = prof.name || '';
-            $('#main').innerHTML = ({ home: vHome, courses: vCourses, edit: vEdit, profile: vProfile })[view]();
-            if (view === 'edit') prev();
-            window.scrollTo(0, 0);
-        }
-        const lessonsOk = c => (c.lessons || []).filter(l => l.title && l.video).length;
-        const minutes = c => (c.lessons || []).reduce((a, l) => a + (+l.minutes || 0), 0);
-        function cover(c, cls) {
-            const img = c.image ? `url('${esc(c.image.replace(/'/g, '%27'))}'),` : '';
-            return `<div class="${cls}" style="background:${img}linear-gradient(135deg,#6c5ce7,#22d3ee);background-size:cover;background-position:center"></div>`;
-        }
-        function chip(s) { const x = ST[s] || ST.draft; return `<span class="text-xs font-bold px-2 py-1 rounded-full ${x[1]}">${x[0]}</span>`; }
-
-        // ===== BOSHQARUV =====
-        function vHome() {
-            const n = s => courses.filter(c => c.status === s).length;
-            const steps = [
-                [prof.bio && prof.specialty, "Profilni to'ldiring: yo'nalish va o'zingiz haqingizda", "go('profile')"],
-                [courses.length > 0, "Birinchi kursni yarating", "go('edit')"],
-                [courses.some(c => lessonsOk(c) >= 3), "Kursga kamida 3 ta dars qo'shing", "go('courses')"],
-                [courses.some(c => c.status !== 'draft'), "Kursni tekshiruvga yuboring", "go('courses')"]
-            ];
-            const box = (v, l) => `<div class="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-700 p-5"><div class="fd text-3xl font-bold">${v}</div><div class="text-sm text-slate-500 dark:text-gray-400 mt-1">${l}</div></div>`;
-            return `<h1 class="fd text-2xl font-bold">Salom, ${esc(prof.name)}</h1>
-            <div class="grid sm:grid-cols-3 gap-4 mt-6">${box(courses.length, 'Jami kurslar')}${box(n('pending'), 'Tekshiruvda')}${box(n('approved'), 'Tasdiqlangan')}</div>
-            <h2 class="fd text-lg font-bold mt-10 mb-3">Boshlash</h2>
-            <ol class="space-y-2 max-w-xl">${steps.map((s, i) => `<li><button onclick="${s[2]}" class="w-full text-left flex items-center gap-3 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-3 hover:border-violet-400">
-                <span class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${s[0] ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-gray-700'}">${s[0] ? '<i class="fa-solid fa-check"></i>' : i + 1}</span>
-                <span class="${s[0] ? 'line-through text-slate-400 dark:text-gray-500' : 'font-semibold'}">${s[1]}</span></button></li>`).join('')}</ol>`;
-        }
-
-        // ===== KURSLARIM =====
-        function vCourses() {
-            const head = `<div class="flex items-center justify-between gap-3 flex-wrap"><h1 class="fd text-2xl font-bold">Kurslarim</h1><button onclick="go('edit')" class="tbtn tbp"><i class="fa-solid fa-plus mr-2"></i>Yangi kurs</button></div>`;
-            if (!courses.length) return head + `<div class="mt-8 bg-white dark:bg-gray-800 border border-dashed border-slate-300 dark:border-gray-600 rounded-xl p-10 text-center"><p class="font-semibold">Hali kurs yo'q.</p><p class="text-sm text-slate-500 dark:text-gray-400 mt-1">Birinchi kursingizni yarating: nom, tavsif va darslarni qo'shing.</p><button onclick="go('edit')" class="tbtn tbp mt-4">Kurs yaratish</button></div>`;
-            return head + `<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mt-6">${courses.map(c => `
-            <article class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col">
-                ${cover(c, 'h-36')}
-                <div class="p-4 flex flex-col gap-2 flex-1">
-                    <div class="flex items-start justify-between gap-2"><h3 class="font-bold leading-snug">${esc(c.title)}</h3>${chip(c.status)}</div>
-                    <div class="text-sm text-slate-500 dark:text-gray-400">${esc(c.category)} · ${(c.lessons || []).length} dars · ${minutes(c)} daqiqa</div>
-                    <div class="font-bold">${money(c.price)}</div>
-                    <div class="flex gap-2 mt-auto pt-2 flex-wrap">
-                        <button onclick="go('edit','${c.id}')" class="tbtn tbg">Tahrirlash</button>
-                        ${c.status === 'draft' || c.status === 'rejected' ? `<button onclick="sendReview('${c.id}')" class="tbtn tbp">Yuborish</button>` : ''}
-                        <button onclick="delCourse('${c.id}')" class="tbtn tbg text-rose-600" aria-label="O'chirish"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div></article>`).join('')}</div>`;
-        }
-        function problem(c) {
-            if (!c.title) return 'Kurs nomini kiriting.';
-            if ((c.description || '').length < 30) return "Tavsif kamida 30 belgidan iborat bo'lsin.";
-            if (!(c.price > 0)) return "Narxni kiriting.";
-            if (!lessonsOk(c)) return "Kamida bitta dars kerak (nomi va video havolasi bilan).";
-            return '';
-        }
-        async function sendReview(id) {
-            const c = courses.find(x => x.id === id), p = problem(c);
-            if (p) { toast(p + ' Kursni tahrirlab, qayta yuboring.', true); return; }
-            try { await db.collection('teacherCourses').doc(id).update({ status: 'pending', updatedAt: new Date().toISOString() }); toast('Tekshiruvga yuborildi.'); }
-            catch (x) { toast('Yuborilmadi. ' + fsErr(x), true); }
-        }
-        async function delCourse(id) {
-            const c = courses.find(x => x.id === id);
-            if (!confirm(`"${c.title}" kursini o'chirasizmi? Buni qaytarib bo'lmaydi.`)) return;
-            try { await db.collection('teacherCourses').doc(id).delete(); toast("Kurs o'chirildi."); } catch (x) { toast("O'chirilmadi. " + fsErr(x), true); }
-        }
-
-        // ===== KURS MUHARRIRI =====
-        const opts = (arr, v) => arr.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('');
-        function vEdit() {
-            const c = ed;
-            return `<div class="flex items-center gap-3 mb-6"><button onclick="go('courses')" class="tbtn tbg" aria-label="Orqaga"><i class="fa-solid fa-arrow-left"></i></button><h1 class="fd text-2xl font-bold">${c.id ? 'Kursni tahrirlash' : 'Yangi kurs'}</h1></div>
-            <div class="grid lg:grid-cols-[1fr_20rem] gap-8 items-start">
-              <div class="space-y-5">
-                <div><label class="text-sm font-semibold">Kurs nomi</label><input id="f-title" class="tinp mt-1" value="${esc(c.title)}" oninput="prev()"></div>
-                <div class="grid sm:grid-cols-3 gap-4">
-                    <div><label class="text-sm font-semibold">Yo'nalish</label><select id="f-category" class="tinp mt-1" onchange="prev()">${opts(CATS, c.category)}</select></div>
-                    <div><label class="text-sm font-semibold">Daraja</label><select id="f-level" class="tinp mt-1">${opts(LEVELS, c.level)}</select></div>
-                    <div><label class="text-sm font-semibold">Narx (so'm)</label><input id="f-price" type="number" min="0" step="1000" class="tinp mt-1" value="${c.price}" oninput="prev()"></div>
-                </div>
-                <div><label class="text-sm font-semibold">Tavsif</label><textarea id="f-description" rows="4" class="tinp mt-1" placeholder="Kurs nimani o'rgatadi va kimlar uchun?">${esc(c.description)}</textarea></div>
-                <div><label class="text-sm font-semibold">Muqova rasmi (havola)</label><input id="f-image" class="tinp mt-1" placeholder="https://..." value="${esc(c.image)}" oninput="prev()"><input type="file" accept="image/*" class="mt-2 text-sm" onchange="upl(this,'f-image',800)"></div>
-                <div><div class="flex items-center justify-between mb-2"><h2 class="fd font-bold">Darslar</h2><button onclick="lesson('add')" class="tbtn tbg"><i class="fa-solid fa-plus mr-1"></i>Dars qo'shish</button></div>
-                    <ol id="les" class="space-y-2">${lessonsHtml()}</ol></div>
-                <div class="flex gap-3 flex-wrap pt-2"><button onclick="save(false)" class="tbtn tbg">Qoralama sifatida saqlash</button><button onclick="save(true)" class="tbtn tbp">Tekshiruvga yuborish</button></div>
-              </div>
-              <aside class="lg:sticky lg:top-6"><div class="text-sm font-semibold mb-2">Talabalar ko'radigan ko'rinish</div><div id="prev" class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl overflow-hidden"></div></aside>
-            </div>`;
-        }
-        function lessonsHtml() {
-            return ed.lessons.map((l, i) => `<li class="les bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-3 grid grid-cols-[1.75rem_1fr_auto] gap-2 items-center">
-                <span class="font-bold text-slate-400 dark:text-gray-500 text-center">${i + 1}</span>
-                <div class="grid sm:grid-cols-[1fr_1fr_5rem] gap-2">
-                    <input class="tinp lt" placeholder="Dars nomi" value="${esc(l.title)}">
-                    <input class="tinp lv" placeholder="Video havolasi (YouTube...)" value="${esc(l.video)}">
-                    <input class="tinp lm" type="number" min="0" placeholder="daq." title="Davomiyligi (daqiqa)" value="${l.minutes || ''}" oninput="prev()">
-                </div>
-                <div class="flex flex-col"><button onclick="lesson('up',${i})" class="text-slate-400 dark:text-gray-500 hover:text-slate-800 dark:hover:text-white" aria-label="Yuqoriga"><i class="fa-solid fa-chevron-up"></i></button>
-                <button onclick="lesson('down',${i})" class="text-slate-400 dark:text-gray-500 hover:text-slate-800 dark:hover:text-white" aria-label="Pastga"><i class="fa-solid fa-chevron-down"></i></button>
-                <button onclick="lesson('del',${i})" class="text-rose-500 mt-1" aria-label="O'chirish"><i class="fa-solid fa-xmark"></i></button></div></li>`).join('');
-        }
-        function readForm() {
-            if (!ed || !$('#f-title')) return;
-            ['title', 'category', 'level', 'description', 'image'].forEach(k => ed[k] = $('#f-' + k).value.trim());
-            ed.price = +$('#f-price').value || 0;
-            ed.lessons = [...document.querySelectorAll('.les')].map(r => ({ title: r.querySelector('.lt').value.trim(), video: r.querySelector('.lv').value.trim(), minutes: +r.querySelector('.lm').value || 0 }));
-        }
-        function lesson(op, i) {
-            readForm(); const L = ed.lessons;
-            if (op === 'add') L.push({ title: '', video: '', minutes: 10 });
-            if (op === 'del') L.splice(i, 1);
-            if (op === 'up' && i > 0) [L[i - 1], L[i]] = [L[i], L[i - 1]];
-            if (op === 'down' && i < L.length - 1) [L[i + 1], L[i]] = [L[i], L[i + 1]];
-            $('#les').innerHTML = lessonsHtml(); prev();
-        }
-        function prev() {
-            readForm(); const c = ed, box = $('#prev'); if (!box) return;
-            box.innerHTML = cover(c, 'h-32') + `<div class="p-4"><div class="text-xs font-bold text-violet-700">${esc(c.category)}</div>
-                <div class="font-bold mt-1 leading-snug">${esc(c.title) || '<span class="text-slate-400 dark:text-gray-500">Kurs nomi</span>'}</div>
-                <div class="text-sm text-slate-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-user-tie mr-1"></i>${esc(prof.name)}</div>
-                <div class="text-sm text-slate-500 dark:text-gray-400 mt-1">${c.lessons.length} dars · ${minutes(c)} daqiqa</div>
-                <div class="font-bold mt-3">${money(c.price)}</div></div>`;
-        }
-        async function save(submit) {
-            readForm(); const c = ed, p = problem(c);
-            if (!c.title) { toast(p, true); return; }
-            if (submit && p) { toast(p, true); return; }
-            const data = {
-                ownerUid: me.uid, ownerName: prof.name || me.email, title: c.title, category: c.category, level: c.level, price: c.price, description: c.description, image: c.image,
-                lessons: c.lessons.filter(l => l.title || l.video), status: submit ? 'pending' : 'draft', updatedAt: new Date().toISOString()
-            };
-            try {
-                Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
-                if (c.id) await db.collection('teacherCourses').doc(c.id).update(data);
-                else { data.createdAt = data.updatedAt; await db.collection('teacherCourses').add(data); }
-                toast(submit ? 'Tekshiruvga yuborildi.' : 'Qoralama saqlandi.'); go('courses');
-            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
-        }
-
-        // ===== PROFIL =====
-        function vProfile() {
-            return `<h1 class="fd text-2xl font-bold mb-6">Profil</h1>
-            <form onsubmit="saveProfile(event)" class="max-w-xl space-y-4">
-                <div class="flex items-center gap-4"><img id="pp" class="w-16 h-16 rounded-full object-cover bg-slate-200 dark:bg-gray-700" alt="" src="${esc(prof.photo || 'https://ui-avatars.com/api/?background=6c5ce7&color=fff&name=' + encodeURIComponent(prof.name || 'U'))}">
-                    <div class="flex-1"><label class="text-sm font-semibold">Rasm (havola)</label><input id="p-photo" class="tinp mt-1" placeholder="https://..." value="${esc(prof.photo)}"><input type="file" accept="image/*" class="mt-2 text-sm" onchange="upl(this,'p-photo',200)"></div></div>
-                <div><label class="text-sm font-semibold">Ism va familiya</label><input id="p-name" required class="tinp mt-1" value="${esc(prof.name)}"></div>
-                <div><label class="text-sm font-semibold">Email</label><input class="tinp mt-1 bg-slate-100 dark:bg-gray-700 dark:text-gray-400" disabled value="${esc(me.email)}"></div>
-                <div class="grid sm:grid-cols-2 gap-4">
-                    <div><label class="text-sm font-semibold">Yo'nalish</label><select id="p-spec" class="tinp mt-1"><option value="">Tanlang</option>${opts(CATS, prof.specialty)}</select></div>
-                    <div><label class="text-sm font-semibold">Tajriba (yil)</label><input id="p-exp" type="number" min="0" max="60" class="tinp mt-1" value="${prof.experience || 0}"></div>
-                </div>
-                <div><label class="text-sm font-semibold">O'zingiz haqingizda</label><textarea id="p-bio" rows="4" class="tinp mt-1" placeholder="Qayerda ishlagansiz, nimani o'rgatasiz?">${esc(prof.bio)}</textarea></div>
-                <button class="tbtn tbp">Saqlash</button>
-            </form>
-            <form onsubmit="chPw(event)" class="max-w-xl space-y-3 mt-10"><h2 class="fd font-bold">Parolni almashtirish</h2><input id="w-old" type="password" required class="tinp" placeholder="Hozirgi parol" autocomplete="current-password"><input id="w-new" type="password" required minlength="6" class="tinp" placeholder="Yangi parol" autocomplete="new-password"><button class="tbtn tbp">Parolni almashtirish</button></form>`;
-        }
-        async function saveProfile(e) {
-            e.preventDefault();
-            const d = { name: $('#p-name').value.trim(), photo: $('#p-photo').value.trim(), specialty: $('#p-spec').value, experience: +$('#p-exp').value || 0, bio: $('#p-bio').value.trim() };
-            try { await db.collection('teachers').doc(me.uid).update(d); Object.assign(prof, d); toast('Profil saqlandi.'); render(); }
-            catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
-        }
-
-        const host = document.getElementById('app-content');
-        const FORM = `<form onsubmit="authGo(event)" class="w-full max-w-sm space-y-4">
-                <div class="flex gap-2 p-1 bg-slate-200 dark:bg-gray-700 rounded-lg">
-                    <button type="button" id="t-login" onclick="setMode('login')" class="flex-1 tbtn">Kirish</button>
-                    <button type="button" id="t-register" onclick="setMode('register')" class="flex-1 tbtn">Ro'yxatdan o'tish</button>
-                </div>
-                <div id="a-name-w" class="hidden"><label class="text-sm font-semibold">Ism va familiya</label><input id="a-name" class="tinp mt-1" autocomplete="name"></div>
-                <div><label class="text-sm font-semibold">Email</label><input id="a-email" type="email" required class="tinp mt-1" autocomplete="email"></div>
-                <div><label class="text-sm font-semibold">Parol</label><input id="a-pass" type="password" required minlength="6" class="tinp mt-1" autocomplete="current-password"></div>
-                <div id="a-code-w" class="hidden"><label class="text-sm font-semibold">Emailga kelgan kod</label><div class="flex gap-2 mt-1"><input id="a-code" inputmode="numeric" maxlength="6" class="tinp flex-1"><button type="button" onclick="sendCode()" class="tbtn tbg">Kod yuborish</button></div><p id="a-code-hint" class="text-xs text-gray-500 mt-1"></p></div>
-                <p id="a-err" class="text-sm text-rose-600 min-h-[1.25rem]" role="alert"></p>
-                <button id="a-go" class="tbtn tbp w-full py-3">Kirish</button>
-                <button type="button" onclick="forgot()" class="text-sm text-violet-700 font-semibold">Parolni unutdim</button>
-            </form>`;
-        let sent = null;
-        function showAuth() {
-            host.innerHTML = `<div class="max-w-sm mx-auto py-8"><h1 class="fd text-2xl font-bold">Bilimingizni kursga aylantiring</h1><p class="text-sm text-gray-500 mt-2 mb-6">Kursingizni shu yerda tayyorlang va tekshiruvga yuboring.</p>${FORM}</div>`;
-            setMode('login'); if (adminMsg) { $('#a-err').textContent = adminMsg; adminMsg = ''; }
-        }
-        function showLoading() { host.innerHTML = '<p class="py-16 text-center text-gray-500">Yuklanmoqda...</p>'; }
-        function showShell() {
-            host.innerHTML = `<nav class="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-gray-200 dark:border-gray-800">
-                <a class="tnavb" data-v="home" href="#/teacher"><i class="fa-solid fa-house"></i>Boshqaruv</a>
-                <a class="tnavb" data-v="courses" href="#/teacher-courses"><i class="fa-solid fa-book-open"></i>Kurslarim</a>
-                <a class="tnavb" data-v="profile" href="#/teacher-profile"><i class="fa-solid fa-user"></i>Profil</a>
-                <span id="who" class="ml-auto text-sm text-gray-500 truncate max-w-[12rem]"></span>
-                <button onclick="tOut()" class="tbtn tbg">Chiqish</button></nav><div id="main"></div>`;
-        }
-        async function initView() {
-            if (view === 'edit') {
-                const id = parseRoute().arg || null;
-                ed = { title: '', category: CATS[0], level: LEVELS[0], price: 150000, description: '', image: '', lessons: [{ title: '', video: '', minutes: 10 }], status: 'draft' };
-                if (id) {
-                    try { const d = await db.collection('teacherCourses').doc(id).get(); if (d.exists && d.data().ownerUid === me.uid) ed = { id, ...d.data() }; else toast('Kurs topilmadi.', true); }
-                    catch (x) { toast("Kursni o'qib bo'lmadi. " + fsErr(x), true); }
-                }
-            }
-            render();
-        }
-        async function sendCode() {
-            const em = $('#a-email').value.trim();
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) { $('#a-err').textContent = "Email manzilini to'g'ri kiriting."; return; }
-            const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
-            const st = await deliverAuthCode(em, $('#a-name').value.trim(), code);
-            if (st === 'failed') { $('#a-err').textContent = "Kod yuborilmadi. Birozdan so'ng qayta urinib ko'ring."; return; }
-            sent = { email: em.toLowerCase(), code, exp: Date.now() + 600000 };
-            $('#a-err').textContent = '';
-            $('#a-code-hint').textContent = st === 'sent' ? `Kod ${em} manziliga yuborildi. 10 daqiqa amal qiladi.` : `Test rejimi: email xizmati ulanmagan. Kod: ${code}`;
-        }
-        function upl(el, id, w) {
-            const f = el.files[0]; if (!f) return; const r = new FileReader();
-            r.onload = () => { const im = new Image(); im.onload = () => { const k = Math.min(1, w / im.width), cv = document.createElement('canvas'); cv.width = im.width * k; cv.height = im.height * k; cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); $('#' + id).value = cv.toDataURL('image/jpeg', .8); if (id === 'f-image') prev(); else $('#pp').src = $('#' + id).value; }; im.src = r.result; };
-            r.readAsDataURL(f);
-        }
-        async function chPw(e) {
-            e.preventDefault();
-            try { await me.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(me.email, $('#w-old').value)); await me.updatePassword($('#w-new').value); toast('Parol almashtirildi.'); e.target.reset(); }
-            catch (x) { toast(ERR[x.code] || x.message, true); }
-        }
-        const tOut = () => auth.signOut();
-        Object.assign(window, { setMode, authGo, forgot, sendCode, go, sendReview, delCourse, lesson, prev, save, saveProfile, upl, chPw, tOut });
-        window.teacherLeave = function () { if (unsub) { unsub(); unsub = null; } };
-        return function (pv) {
-            view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile' })[pv] || 'home';
-            if (!inited) {
-                inited = true;
-                fbApp = firebase.initializeApp(FIREBASE_CONFIG, 'teacher');
-                auth = fbApp.auth(); db = fbApp.firestore();
-                if (!document.getElementById('toast')) document.body.insertAdjacentHTML('beforeend', '<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-lg text-sm font-semibold text-white z-50" role="status"></div>');
-                showLoading(); startAuth(); return;
-            }
-            if (!authReady) { showLoading(); return; }
-            if (me) enterView(); else showAuth();
-        };
-})();
 
     </script>
     <script>
@@ -3743,6 +3403,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["EduFlow saytiga qaytish", "Back to EduFlow", "Вернуться на EduFlow"],
+        ["Ustozlar", "Teachers", "Преподаватели"],
         ["Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing (README.md, \"Ustozlar sayti: sozlash\").", "Access denied: add the teacher rules to Firestore Rules (README.md, \"Ustozlar sayti: sozlash\").", "Нет доступа: добавьте правила для преподавателей в Firestore Rules (README.md, «Ustozlar sayti: sozlash»)."],
         ["Yuklanmoqda...", "Loading...", "Загрузка..."],
         ["Ustozlar uchun", "For teachers", "Преподавателям"],
