@@ -1326,13 +1326,92 @@
         let adminFbUser = null;
         let adminCommentsStarted = false;
 
+// ===== USTOZ KURSLARI: tekshiruvga yuborilganlarni tasdiqlash / rad etish =====
+let atcList = [], atcState = 'off', atcUnsub = null; // off | loading | on | error
+function atcAuthChanged() {
+    if (atcUnsub) { atcUnsub(); atcUnsub = null; }
+    atcList = [];
+    if (!adminFbUser || !cloudDb) { atcState = 'off'; atcRender(); return; }
+    atcState = 'loading'; atcRender();
+    atcUnsub = cloudDb.collection('teacherCourses').where('status', '==', 'pending').onSnapshot(snap => {
+        atcList = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((x, y) => (x.updatedAt || '').localeCompare(y.updatedAt || ''));
+        atcState = 'on'; atcRender();
+    }, err => {
+        console.error('Ustoz kurslari xatosi:', err);
+        atcState = err && err.code === 'permission-denied' ? 'denied' : 'error'; atcRender();
+    });
+}
+function atcSignIn(e) {
+    e.preventDefault();
+    firebase.auth().signInWithEmailAndPassword(document.getElementById('atc-email').value.trim(), document.getElementById('atc-pass').value).catch(err => {
+        if (['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-login-credentials', 'auth/invalid-email'].includes(err.code)) alert("Email yoki parol noto'g'ri.");
+        else if (err.code === 'auth/operation-not-allowed') alert("Firebase Console > Authentication > Sign-in method da Email/Password ni yoqing.");
+        else alert('Kirish xatosi: ' + (err.message || err.code));
+    });
+}
+function atcRender() {
+    const box = document.getElementById('admin-teacher-courses');
+    if (!box) return;
+    const fmt = n => Number(n || 0).toLocaleString('ru-RU') + " so'm";
+    const mins = c => (c.lessons || []).reduce((s, l) => s + (+l.minutes || 0), 0);
+    const inp = 'px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500';
+    let body;
+    if (!cloudDb) body = `<p class="text-sm text-gray-500">Firebase ulanmagan.</p>`;
+    else if (!adminFbUser) body = `<form onsubmit="atcSignIn(event)" class="flex flex-wrap gap-2 items-center">
+        <div class="w-full text-sm text-gray-500 dark:text-gray-400">Ustozlar yuborgan kurslarni ko'rish uchun Firebase admin akkaunti (admin@eduflow.uz) bilan kiring. Brauzer eslab qoladi.</div>
+        <input id="atc-email" type="email" required placeholder="Admin email" class="${inp} flex-1 min-w-[160px]">
+        <input id="atc-pass" type="password" required placeholder="Parol" class="${inp} flex-1 min-w-[120px]">
+        <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold rounded-lg text-sm transition">Kirish</button></form>`;
+    else if (atcState === 'loading') body = `<p class="text-sm text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Yuklanmoqda...</p>`;
+    else if (atcState === 'denied') body = `<p class="text-sm text-red-600">Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing va Publish qiling.</p>`;
+    else if (atcState === 'error') body = `<p class="text-sm text-red-600">Kurslarni yuklab bo'lmadi. Internet aloqasini tekshiring.</p>`;
+    else if (!atcList.length) body = `<p class="text-sm text-gray-500 dark:text-gray-400">Tekshiruvni kutayotgan kurs yo'q. Ustoz kursni yuborganda u shu yerda darhol paydo bo'ladi.</p>`;
+    else body = atcList.map(c => `
+        <article class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden grid md:grid-cols-[14rem_1fr]">
+            <div class="h-40 md:h-full min-h-[10rem]" style="background:${c.image ? `url('${escapeHtml(String(c.image).replace(/'/g, '%27'))}'),` : ''}linear-gradient(135deg,#6c5ce7,#22d3ee);background-size:cover;background-position:center"></div>
+            <div class="p-4 space-y-2">
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">${escapeHtml(c.title || '')}</h4>
+                <div class="text-sm text-gray-500 dark:text-gray-400"><i class="fa-solid fa-user-tie mr-1"></i>${escapeHtml(c.ownerName || '')} · ${escapeHtml(c.category || '')} · ${escapeHtml(c.level || '')} · <b class="text-gray-800 dark:text-gray-200">${fmt(c.price)}</b></div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">${escapeHtml(c.description || '')}</p>
+                <details class="text-sm"><summary class="cursor-pointer font-semibold text-gray-700 dark:text-gray-200">Darslar: ${(c.lessons || []).length} ta, ${mins(c)} daqiqa</summary>
+                    <ol class="list-decimal pl-6 mt-2 space-y-1">${(c.lessons || []).map(l => `<li>${escapeHtml(l.title || '')}${l.minutes ? ` (${+l.minutes} daq.)` : ''}${/^https?:\/\//i.test(l.video || '') ? ` · <a href="${escapeHtml(l.video)}" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 underline">video</a>` : ''}</li>`).join('')}</ol></details>
+                <div class="text-xs text-gray-400">Yuborilgan: ${c.updatedAt ? fmtDate(c.updatedAt) : '-'}</div>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button onclick="atcSet('${c.id}','approved')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm"><i class="fa-solid fa-check mr-1"></i>Tasdiqlash</button>
+                    <button onclick="atcSet('${c.id}','rejected')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm"><i class="fa-solid fa-xmark mr-1"></i>Rad etish</button>
+                </div>
+            </div>
+        </article>`).join('');
+    const n = atcList.length;
+    box.innerHTML = `<div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border ${n ? 'border-amber-400 dark:border-amber-500/60' : 'border-gray-200 dark:border-gray-700'} shadow-sm">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chalkboard-user text-violet-500"></i> Ustoz kurslari: tekshiruv</h3>
+            ${n ? `<span class="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold">${n} ta kutmoqda</span>` : ''}
+        </div>
+        <div class="space-y-4">${body}</div></div>`;
+}
+function atcSet(id, status) {
+    const c = atcList.find(x => x.id === id); if (!c) return;
+    const data = { status, updatedAt: new Date().toISOString() };
+    if (status === 'rejected') {
+        const r = prompt(`"${c.title}" kursini rad etish sababi (ustoz uni ko'radi):`, '');
+        if (r === null) return;
+        data.rejectReason = r.trim().slice(0, 300);
+    } else {
+        if (!confirm(`"${c.title}" kursini tasdiqlaysizmi?`)) return;
+        data.rejectReason = '';
+    }
+    cloudDb.collection('teacherCourses').doc(id).update(data)
+        .catch(err => alert(err && err.code === 'permission-denied' ? "Ruxsat yo'q: Firestore Rules'ni tekshiring." : 'Xato: ' + (err.message || err.code)));
+}
+
         function initAdminComments() {
             if (!cloudDb || adminCommentsStarted) return;
             adminCommentsStarted = true;
             adminCommentsState = 'loading';
             try {
                 if (firebase.auth) {
-                    firebase.auth().onAuthStateChanged(u => { adminFbUser = (u && u.email) ? u : null; acmRenderAuth(); });
+                    firebase.auth().onAuthStateChanged(u => { adminFbUser = (u && u.email) ? u : null; acmRenderAuth(); atcAuthChanged(); });
                 }
             } catch (e) { console.error('Auth init xatosi:', e); }
             cloudDb.collection('comments').orderBy('createdAt', 'desc').limit(200).onSnapshot(snap => {
@@ -2256,6 +2335,9 @@
                         </div>
                     </div>
 
+                    <!-- USTOZ KURSLARI (tekshiruv) -->
+                    <div id="admin-teacher-courses"></div>
+
                     <!-- STATS CARDS -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-green-300 dark:border-green-700/60 shadow-sm flex items-center gap-4 relative">
@@ -2432,6 +2514,7 @@
             `;
             refreshAdminUserStats();
             adminCommentsMount();
+            atcRender();
         }
 
         // TASKS VIEW
@@ -3483,37 +3566,7 @@
         })();
     </script>
 
-<script>
-// ===== Ustoz kurslarini tasdiqlash =====
-(function () {
-    let unsub = null, uid = null;
-    function ensureBox() {
-        if (document.getElementById('atc-list')) return true;
-        const h = document.getElementById('admin-comments-section'); if (!h) return false;
-        h.insertAdjacentHTML('afterend', '<div class="mt-6 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"><h3 class="font-display font-bold mb-3">Ustoz kurslari</h3><div id="atc-list" class="space-y-3 text-sm"></div></div>');
-        return true;
-    }
-    function draw(docs) {
-        const l = document.getElementById('atc-list'); if (!l) return;
-        l.innerHTML = docs.length ? docs.map(d => { const c = d.data(); return `<div class="p-3 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="font-bold">${escapeHtml(c.title)}</div>
-            <div class="text-gray-500">${escapeHtml(c.ownerName || '')} · ${escapeHtml(c.category || '')} · ${(c.lessons || []).length} dars · ${Number(c.price || 0).toLocaleString('ru')} so'm</div>
-            <p class="mt-1 text-gray-600 dark:text-gray-300">${escapeHtml((c.description || '').slice(0, 200))}</p>
-            <div class="flex gap-2 mt-2"><button onclick="atcSet('${d.id}','approved')" class="px-3 py-1.5 rounded-lg bg-green-600 text-white font-semibold">Tasdiqlash</button>
-            <button onclick="atcSet('${d.id}','rejected')" class="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold">Rad etish</button></div></div>`; }).join('') : '<p class="text-gray-400">Tekshiruvda kurs yo\'q.</p>';
-    }
-    window.atcSet = function (id, status) {
-        firebase.firestore().collection('teacherCourses').doc(id).update({ status, updatedAt: new Date().toISOString() }).catch(e => alert('Xato: ' + e.code));
-    };
-    setInterval(function () {
-        const u = firebase.auth().currentUser, ok = u && u.email;
-        if (!ok) { if (unsub) { unsub(); unsub = null; uid = null; } return; }
-        if (!ensureBox() || uid === u.uid) return;
-        uid = u.uid; if (unsub) unsub();
-        unsub = firebase.firestore().collection('teacherCourses').where('status', '==', 'pending').onSnapshot(s => draw(s.docs), e => console.error('Ustoz kurslari:', e));
-    }, 1500);
-})();
-</script>
+
 </body>
 
 </html>

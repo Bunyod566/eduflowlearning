@@ -484,6 +484,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
                 <div class="p-4 flex flex-col gap-2 flex-1">
                     <div class="flex items-start justify-between gap-2"><h3 class="font-bold leading-snug">${esc(c.title)}</h3>${chip(c.status)}</div>
                     <div class="text-sm text-slate-500 dark:text-gray-400">${esc(c.category)} · ${(c.lessons || []).length} dars · ${minutes(c)} daqiqa</div>
+                    ${c.status === 'rejected' && c.rejectReason ? `<div class="text-sm text-rose-600 dark:text-rose-400"><i class="fa-solid fa-circle-exclamation mr-1"></i><span>Rad etish sababi:</span> <span>${esc(c.rejectReason)}</span></div>` : ''}
                     <div class="font-bold">${money(c.price)}</div>
                     <div class="flex gap-2 mt-auto pt-2 flex-wrap">
                         <button onclick="go('edit','${c.id}')" class="tbtn tbg">Tahrirlash</button>
@@ -502,7 +503,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
         async function sendReview(id) {
             const c = courses.find(x => x.id === id), p = problem(c);
             if (p) { toast(p + ' Kursni tahrirlab, qayta yuboring.', true); return; }
-            try { await db.collection('teacherCourses').doc(id).update({ status: 'pending', updatedAt: new Date().toISOString() }); toast('Tekshiruvga yuborildi.'); }
+            try { await db.collection('teacherCourses').doc(id).update({ status: 'pending', rejectReason: '', updatedAt: new Date().toISOString() }); toast('Tekshiruvga yuborildi.'); }
             catch (x) { toast('Yuborilmadi. ' + fsErr(x), true); }
         }
         async function delCourse(id) {
@@ -573,7 +574,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             if (submit && p) { toast(p, true); return; }
             const data = {
                 ownerUid: me.uid, ownerName: prof.name || me.email, title: c.title, category: c.category, level: c.level, price: c.price, description: c.description, image: c.image,
-                lessons: c.lessons.filter(l => l.title || l.video), status: submit ? 'pending' : 'draft', updatedAt: new Date().toISOString()
+                lessons: c.lessons.filter(l => l.title || l.video), status: submit ? 'pending' : 'draft', updatedAt: new Date().toISOString(), ...(submit ? { rejectReason: '' } : {})
             };
             try {
                 Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
@@ -690,6 +691,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Rad etish sababi:", "Rejection reason:", "Причина отклонения:"],
         ["EduFlow saytiga qaytish", "Back to EduFlow", "Вернуться на EduFlow"],
         ["Ustozlar", "Teachers", "Преподаватели"],
         ["Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing (README.md, \"Ustozlar sayti: sozlash\").", "Access denied: add the teacher rules to Firestore Rules (README.md, \"Ustozlar sayti: sozlash\").", "Нет доступа: добавьте правила для преподавателей в Firestore Rules (README.md, «Ustozlar sayti: sozlash»)."],
