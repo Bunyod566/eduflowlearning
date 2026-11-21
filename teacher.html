@@ -318,7 +318,7 @@ async function deliverAuthCode(email, name, code) {
 }
 
 // Manzillar: teacher.html (boshqaruv), #/teacher-courses, #/teacher-edit[/id], #/teacher-profile
-const T_ROUTES = { 'teacher': 1, 'teacher-courses': 1, 'teacher-edit': 1, 'teacher-profile': 1 };
+const T_ROUTES = { 'teacher': 1, 'teacher-courses': 1, 'teacher-edit': 1, 'teacher-profile': 1, 'teacher-groups': 1, 'teacher-group': 1 };
 function parseRoute() {
     const parts = location.hash.replace(/^#\/?/, '').split('/');
     let arg = parts.slice(1).join('/');
@@ -370,7 +370,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             if (c === 'invalid-argument') return "Ma'lumotda xato bor (rasm juda katta bo'lishi mumkin).";
             return (x && x.message) || c || '';
         }
-        let me = null, prof = {}, courses = [], view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile' })[PAGE_VIEW] || 'home', ed = null, unsub = null, pendingName = '', mode = 'login';
+        let me = null, prof = {}, courses = [], view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile', 'teacher-groups': 'groups', 'teacher-group': 'group' })[PAGE_VIEW] || 'home', ed = null, unsub = null, pendingName = '', mode = 'login';
 
         function toast(msg, bad) {
             const t = $('#toast'); t.textContent = msg; t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold text-white z-50 ' + (bad ? 'bg-rose-600' : 'bg-emerald-600');
@@ -412,6 +412,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
                 courses = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
                 if (view !== 'edit' && onTeacherPage()) render();
             }, x => toast("Kurslarni yuklab bo'lmadi. " + fsErr(x), true));
+            if (view === 'groups') unsub = gWatchList();
+            if (view === 'group') { gReset(parseRoute().arg || ''); unsub = gWatch(); }
             showShell(); initView();
         }
         function startAuth() {
@@ -439,14 +441,17 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
         }
 
         // ===== NAVIGATSIYA =====
-        const TP = { home: 'teacher', courses: 'teacher-courses', edit: 'teacher-edit', profile: 'teacher-profile' };
+        const TP = { home: 'teacher', courses: 'teacher-courses', edit: 'teacher-edit', profile: 'teacher-profile', groups: 'teacher-groups', group: 'teacher-group' };
         function go(v, id) { location.hash = '#/' + TP[v] + (id ? '/' + encodeURIComponent(id) : ''); }
+        let lastView = '';
         function render() {
-            document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (view === 'edit' ? 'courses' : view)));
+            const nv = view === 'edit' ? 'courses' : view === 'group' ? 'groups' : view;
+            document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === nv));
             if ($('#who')) $('#who').textContent = prof.name || '';
-            $('#main').innerHTML = ({ home: vHome, courses: vCourses, edit: vEdit, profile: vProfile })[view]();
+            $('#main').innerHTML = ({ home: vHome, courses: vCourses, edit: vEdit, profile: vProfile, groups: vGroups, group: vGroup })[view]();
             if (view === 'edit') prev();
-            window.scrollTo(0, 0);
+            if (view !== lastView) window.scrollTo(0, 0);
+            lastView = view;
         }
         const lessonsOk = c => (c.lessons || []).filter(l => l.title && l.video).length;
         const minutes = c => (c.lessons || []).reduce((a, l) => a + (+l.minutes || 0), 0);
@@ -632,6 +637,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             host.innerHTML = `<nav class="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-gray-200 dark:border-gray-800">
                 <a class="tnavb" data-v="home" href="#/teacher"><i class="fa-solid fa-house"></i>Boshqaruv</a>
                 <a class="tnavb" data-v="courses" href="#/teacher-courses"><i class="fa-solid fa-book-open"></i>Kurslarim</a>
+                <a class="tnavb" data-v="groups" href="#/teacher-groups"><i class="fa-solid fa-user-group"></i>Guruhlar</a>
                 <a class="tnavb" data-v="profile" href="#/teacher-profile"><i class="fa-solid fa-user"></i>Profil</a>
                 <span id="who" class="ml-auto text-sm text-gray-500 truncate max-w-[12rem]"></span>
                 <button onclick="tOut()" class="tbtn tbg">Chiqish</button></nav><div id="main"></div>`;
@@ -667,11 +673,281 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             try { await me.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(me.email, $('#w-old').value)); await me.updatePassword($('#w-new').value); toast('Parol almashtirildi.'); e.target.reset(); }
             catch (x) { toast(ERR[x.code] || x.message, true); }
         }
+        // ===== GURUHLAR, BALLAR VA DAVOMAT =====
+        // groups/{id}: ustoz guruhi va o'quvchilari; points/{emailKey}: o'quvchi ballari;
+        // pointLog/{id}: ball o'zgarishlari tarixi; attendance/{groupId_sana}: davomat.
+        const skey = e => encodeURIComponent(String(e || '').trim().toLowerCase());
+        const pad2 = n => String(n).padStart(2, '0');
+        const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+        const fmtDT = iso => { const d = new Date(iso); return isNaN(d) ? '' : pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+        const ini = n => esc(String(n || '?').trim().charAt(0).toUpperCase() || '?');
+        const ATT = { p: ['Keldi', 'bg-emerald-600 text-white'], l: ['Kechikdi', 'bg-amber-500 text-white'], e: ['Sababli', 'bg-sky-600 text-white'], a: ['Kelmadi', 'bg-rose-600 text-white'] };
+        const MAX_STUDENTS = 100;
+        let groups = [], grp = null, gState = 'loading', gId = '', gTab = 'students', gAmt = 5, gReason = '', gDate = todayStr(),
+            gAtt = {}, gBal = {}, gLog = [], gAllAtt = [], gFind = '', gFound = [], gUsers = null, gTok = 0, gBusy = false;
+        const card = 'bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl';
+        const muted = 'text-slate-500 dark:text-gray-400';
+
+        function gReset(id) {
+            gId = id; grp = null; gState = 'loading'; gTab = 'students'; gDate = todayStr();
+            gAtt = {}; gBal = {}; gLog = []; gAllAtt = []; gFind = ''; gFound = []; gTok++;
+        }
+        function gWatch() {
+            return db.collection('groups').doc(gId).onSnapshot(d => {
+                if (!onTeacherPage() || view !== 'group') return;
+                if (!d.exists || d.data().ownerUid !== me.uid) { grp = null; gState = 'missing'; render(); return; }
+                grp = { id: d.id, ...d.data() }; gState = 'ok';
+                render(); gLoad();
+            }, () => { grp = null; gState = 'missing'; if (view === 'group') render(); });
+        }
+        function gWatchList() {
+            return db.collection('groups').where('ownerUid', '==', me.uid).onSnapshot(s => {
+                groups = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                if (onTeacherPage() && view === 'groups') render();
+            }, x => toast("Guruhlarni yuklab bo'lmadi. " + fsErr(x), true));
+        }
+
+        // --- Guruhlar ro'yxati ---
+        function vGroups() {
+            const head = `<h1 class="fd text-2xl font-bold">Guruhlar</h1>
+            <form onsubmit="gCreate(event)" class="mt-5 flex flex-wrap gap-2 max-w-lg">
+                <input id="g-new" required maxlength="60" class="tinp flex-1 min-w-[12rem]" placeholder="Guruh nomi">
+                <button class="tbtn tbp">Guruh yaratish</button></form>`;
+            if (!groups.length) return head + `<div class="mt-8 ${card} border-dashed p-10 text-center"><p class="font-semibold">Hali guruh yo'q.</p><p class="text-sm ${muted} mt-1">Guruh yarating, unga o'quvchilarni qo'shing, ball bering va davomat qiling.</p></div>`;
+            return head + `<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mt-6">${groups.map(g => `
+                <a href="#/teacher-group/${encodeURIComponent(g.id)}" class="block ${card} p-5 hover:border-violet-400">
+                    <div class="font-bold text-lg leading-snug">${esc(g.name)}</div>
+                    <div class="text-sm ${muted} mt-2"><i class="fa-solid fa-user-group mr-1"></i><b>${(g.students || []).length}</b> <span>o'quvchi</span></div>
+                </a>`).join('')}</div>`;
+        }
+        async function gCreate(e) {
+            e.preventDefault();
+            const name = $('#g-new').value.trim(); if (!name) return;
+            try {
+                await db.collection('groups').add({ ownerUid: me.uid, ownerName: prof.name || me.email, name, students: [], createdAt: new Date().toISOString() });
+                toast('Guruh yaratildi.'); e.target.reset();
+            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+        }
+
+        // --- Bitta guruh ---
+        function vGroup() {
+            if (gState === 'loading') return `<p class="py-16 text-center ${muted}">Yuklanmoqda...</p>`;
+            const back = `<a href="#/teacher-groups" class="tbtn tbg inline-flex items-center" aria-label="Orqaga"><i class="fa-solid fa-arrow-left"></i></a>`;
+            if (gState === 'missing') return `<div class="flex items-center gap-3">${back}<p class="font-semibold">Guruh topilmadi.</p></div>`;
+            const tab = (k, ic, t) => `<button onclick="gSetTab('${k}')" class="tbtn ${gTab === k ? 'tbp' : 'tbg'}" aria-pressed="${gTab === k}"><i class="fa-solid ${ic} mr-2"></i>${t}</button>`;
+            return `<div class="flex items-center gap-3 flex-wrap mb-6">${back}
+                <h1 class="fd text-2xl font-bold flex-1 min-w-0 truncate">${esc(grp.name)}</h1>
+                <button onclick="gDelete()" class="tbtn tbg text-rose-600" aria-label="Guruhni o'chirish"><i class="fa-solid fa-trash"></i></button></div>
+                <div class="flex flex-wrap gap-2 mb-6">${tab('students', 'fa-coins', "O'quvchilar va ballar")}${tab('att', 'fa-calendar-check', 'Davomat')}${tab('log', 'fa-clock-rotate-left', 'Tarix')}</div>
+                <div id="g-body">${gBody()}</div>`;
+        }
+        const gBody = () => gTab === 'att' ? gAttendance() : gTab === 'log' ? gHistory() : gStudents();
+        function gRefresh() { const b = $('#g-body'); if (b && view === 'group' && grp) b.innerHTML = gBody(); }
+        function gSetTab(k) { gTab = k; render(); }
+
+        async function gLoad() {
+            if (!grp || !me) return;
+            const tok = ++gTok, keys = (grp.students || []).map(s => skey(s.email)), bal = {};
+            try {
+                for (let i = 0; i < keys.length; i += 10) {
+                    const s = await db.collection('points').where(firebase.firestore.FieldPath.documentId(), 'in', keys.slice(i, i + 10)).get();
+                    s.forEach(d => { bal[d.id] = +d.data().balance || 0; });
+                }
+                const [lg, at] = await Promise.all([
+                    db.collection('pointLog').where('groupId', '==', gId).get(),
+                    db.collection('attendance').where('ownerUid', '==', me.uid).where('groupId', '==', gId).get()
+                ]);
+                if (tok !== gTok) return;
+                gBal = bal;
+                gLog = lg.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                gAllAtt = at.docs.map(d => d.data());
+                gLoadAtt(); gRefresh();
+            } catch (x) { if (tok === gTok) toast("Ma'lumotlarni o'qib bo'lmadi. " + fsErr(x), true); }
+        }
+
+        // --- O'quvchilar va ballar ---
+        function gStudents() {
+            const S = grp.students || [];
+            const panel = `<div class="${card} p-4 mb-6 flex flex-wrap items-end gap-3">
+                <div><label class="text-sm font-semibold" for="g-amt">Ball miqdori</label><input id="g-amt" type="number" min="1" max="1000" value="${gAmt}" oninput="gSetAmt(this.value)" class="tinp mt-1 w-28"></div>
+                <div class="flex-1 min-w-[12rem]"><label class="text-sm font-semibold" for="g-reason">Sabab (ixtiyoriy)</label><input id="g-reason" maxlength="100" value="${esc(gReason)}" oninput="gSetReason(this.value)" class="tinp mt-1" placeholder="Masalan: darsda faol qatnashdi"></div>
+                <button onclick="gPtsAll()" class="tbtn tbg" ${S.length ? '' : 'disabled'}><i class="fa-solid fa-users mr-2"></i>Hammasiga qo'shish</button></div>`;
+            const list = S.length ? `<ul class="space-y-2">${S.map((s, i) => `
+                <li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold shrink-0">${ini(s.name)}</span>
+                    <div class="flex-1 min-w-[9rem]"><div class="font-semibold truncate">${esc(s.name)}</div><div class="text-xs ${muted} truncate">${esc(s.email)}</div></div>
+                    <div class="text-lg font-bold min-w-[4.5rem] text-right"><i class="fa-solid fa-coins text-amber-500 mr-1"></i><span id="g-bal-${i}">${gBal[skey(s.email)] || 0}</span></div>
+                    <div class="flex gap-1.5">
+                        <button onclick="gPts(${i},1)" class="tbtn bg-emerald-600 text-white" aria-label="Ball qo'shish"><i class="fa-solid fa-plus"></i></button>
+                        <button onclick="gPts(${i},-1)" class="tbtn bg-rose-600 text-white" aria-label="Ball ayirish"><i class="fa-solid fa-minus"></i></button>
+                        <button onclick="gRemove(${i})" class="tbtn tbg ${muted}" aria-label="Guruhdan chiqarish"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </li>`).join('')}</ul>` : `<p class="${muted}">Guruhda o'quvchi yo'q. Pastdan qidirib qo'shing.</p>`;
+            const find = `<div class="mt-8 max-w-xl"><label class="text-sm font-semibold" for="g-find">O'quvchi qo'shish</label>
+                <input id="g-find" value="${esc(gFind)}" oninput="gSearch(this.value)" class="tinp mt-1" placeholder="Ism yoki email bo'yicha qidiring" autocomplete="off">
+                <div id="g-found" class="mt-2 space-y-1">${gFoundHtml()}</div></div>`;
+            return panel + list + find;
+        }
+        const gSetAmt = v => { gAmt = Math.min(1000, Math.max(1, parseInt(v, 10) || 1)); };
+        const gSetReason = v => { gReason = String(v).slice(0, 100); };
+
+        function gFoundHtml() {
+            if (gFind.trim().length < 2) return `<p class="text-xs ${muted}">Kamida 2 ta harf yozing. Faqat saytda ro'yxatdan o'tgan o'quvchilar chiqadi.</p>`;
+            if (gUsers === null) return `<p class="text-xs ${muted}">Yuklanmoqda...</p>`;
+            if (!gFound.length) return `<p class="text-xs ${muted}">O'quvchi topilmadi.</p>`;
+            return gFound.map((u, i) => `<div class="${card} flex items-center gap-3 px-3 py-2">
+                <div class="flex-1 min-w-0"><div class="font-semibold text-sm truncate">${esc(u.name)}</div><div class="text-xs ${muted} truncate">${esc(u.email)}</div></div>
+                <button onclick="gAdd(${i})" class="tbtn tbp">Qo'shish</button></div>`).join('');
+        }
+        async function gSearch(v) {
+            gFind = v;
+            if (v.trim().length >= 2 && gUsers === null) {
+                const box0 = $('#g-found'); if (box0) box0.innerHTML = gFoundHtml();
+                try { const s = await db.collection('users').get(); gUsers = s.docs.map(d => d.data()).filter(u => u && u.email && !u.deleted); }
+                catch (x) { gUsers = []; toast("O'quvchilar ro'yxatini o'qib bo'lmadi. " + fsErr(x), true); }
+            }
+            if (!grp || v !== gFind) return;
+            const q = v.trim().toLowerCase(), have = new Set((grp.students || []).map(s => skey(s.email)));
+            gFound = (gUsers || []).filter(u => !have.has(skey(u.email)) && ((u.name || '').toLowerCase().includes(q) || u.email.toLowerCase().includes(q))).slice(0, 8);
+            const box = $('#g-found'); if (box) box.innerHTML = gFoundHtml();
+        }
+        async function gAdd(i) {
+            const u = gFound[i]; if (!u || !grp) return;
+            const S = grp.students || [];
+            if (S.length >= MAX_STUDENTS) { toast("Guruhda ko'pi bilan 100 ta o'quvchi bo'ladi.", true); return; }
+            try {
+                await db.collection('groups').doc(gId).update({ students: S.concat([{ email: u.email.trim(), name: u.name || u.email }]) });
+                gFind = ''; gFound = []; toast("O'quvchi qo'shildi.");
+            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+        }
+        async function gRemove(i) {
+            const S = grp.students || []; if (!S[i]) return;
+            if (!confirm("O'quvchini guruhdan chiqarasizmi? Uning ballari saqlanib qoladi.")) return;
+            try { await db.collection('groups').doc(gId).update({ students: S.filter((_, j) => j !== i) }); }
+            catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+        }
+        async function gDelete() {
+            if (!grp || !confirm("Guruhni o'chirasizmi? Davomat yozuvlari ham o'chadi, o'quvchilarning ballari saqlanib qoladi.")) return;
+            try {
+                const at = await db.collection('attendance').where('ownerUid', '==', me.uid).where('groupId', '==', gId).get();
+                const b = db.batch(); at.docs.forEach(d => b.delete(d.ref)); b.delete(db.collection('groups').doc(gId));
+                await b.commit(); toast("Guruh o'chirildi."); go('groups');
+            } catch (x) { toast("O'chirilmadi. " + fsErr(x), true); }
+        }
+
+        // Ball o'zgartirish: balans 0 dan pastga tushmaydi, har o'zgarish tarixga yoziladi
+        async function changePoints(st, delta, reason) {
+            const key = skey(st.email), ref = db.collection('points').doc(key), logRef = db.collection('pointLog').doc(), now = new Date().toISOString();
+            let out = null;
+            await db.runTransaction(async t => {
+                const d = await t.get(ref), cur = d.exists ? (+d.data().balance || 0) : 0, nb = Math.max(0, cur + delta), real = nb - cur;
+                out = { nb, real, now };
+                if (!real) return;
+                t.set(ref, { email: st.email.trim(), name: st.name || '', balance: nb, updatedAt: now });
+                t.set(logRef, { key, email: st.email.trim(), name: st.name || '', delta: real, reason: reason || '', groupId: gId, groupName: grp.name || '', teacherUid: me.uid, teacherName: prof.name || me.email, createdAt: now });
+            });
+            if (out.real) gLog.unshift({ name: st.name, delta: out.real, reason: reason || '', teacherName: prof.name || me.email, createdAt: out.now });
+            return out;
+        }
+        async function gPts(i, sign) {
+            const st = (grp && grp.students || [])[i]; if (!st || gBusy) return;
+            gBusy = true;
+            try {
+                const r = await changePoints(st, sign * gAmt, gReason.trim());
+                if (!r.real) toast("Ball 0 dan kam bo'lmaydi.", true);
+                else {
+                    gBal[skey(st.email)] = r.nb;
+                    const el = $('#g-bal-' + i); if (el) el.textContent = r.nb;
+                    toast(sign > 0 ? "Ball qo'shildi." : 'Ball ayirildi.');
+                }
+            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+            gBusy = false;
+        }
+        async function gPtsAll() {
+            const S = (grp && grp.students) || []; if (!S.length || gBusy) return;
+            if (!confirm("Guruhdagi hamma o'quvchiga ko'rsatilgan miqdorda ball qo'shilsinmi?")) return;
+            gBusy = true;
+            try { for (const st of S) { const r = await changePoints(st, gAmt, gReason.trim()); gBal[skey(st.email)] = r.nb; } toast("Ball qo'shildi."); }
+            catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+            gBusy = false; gRefresh();
+        }
+
+        // --- Davomat ---
+        function gLoadAtt() {
+            gAtt = {};
+            const doc = gAllAtt.find(a => a.date === gDate);
+            if (doc) (doc.records || []).forEach(r => { gAtt[skey(r.email)] = r.s; });
+        }
+        function gAttendance() {
+            const S = grp.students || [];
+            if (!S.length) return `<p class="${muted}">Davomat uchun avval guruhga o'quvchi qo'shing.</p>`;
+            const saved = gAllAtt.some(a => a.date === gDate);
+            const rows = S.map((s, i) => {
+                const cur = gAtt[skey(s.email)];
+                return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                    <div class="flex-1 min-w-[9rem]"><div class="font-semibold truncate">${esc(s.name)}</div><div class="text-xs ${muted} truncate">${esc(s.email)}</div></div>
+                    <div class="flex flex-wrap gap-1.5">${Object.keys(ATT).map(k => `<button onclick="gSetAtt(${i},'${k}')" class="tbtn !px-3 !py-1.5 ${cur === k ? ATT[k][1] : 'tbg'}" aria-pressed="${cur === k}">${ATT[k][0]}</button>`).join('')}</div></li>`;
+            }).join('');
+            return `<div class="flex flex-wrap items-end gap-3 mb-4">
+                    <div><label class="text-sm font-semibold" for="g-date">Sana</label><input id="g-date" type="date" value="${gDate}" onchange="gSetDate(this.value)" class="tinp mt-1 w-44"></div>
+                    <button onclick="gMarkAll()" class="tbtn tbg"><i class="fa-solid fa-check-double mr-2"></i>Hammasi keldi</button>
+                    ${saved ? `<span class="text-sm text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i><span>Bu sana uchun davomat saqlangan.</span></span>` : ''}
+                </div>
+                <ul class="space-y-2">${rows}</ul>
+                <button onclick="gSaveAtt()" class="tbtn tbp mt-4"><i class="fa-solid fa-floppy-disk mr-2"></i>Davomatni saqlash</button>
+                ${gReport()}`;
+        }
+        function gSetDate(v) { if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return; gDate = v; gLoadAtt(); gRefresh(); }
+        function gSetAtt(i, k) { const s = (grp.students || [])[i]; if (!s) return; const key = skey(s.email); gAtt[key] = gAtt[key] === k ? undefined : k; gRefresh(); }
+        function gMarkAll() { (grp.students || []).forEach(s => { gAtt[skey(s.email)] = 'p'; }); gRefresh(); }
+        async function gSaveAtt() {
+            const S = grp.students || [];
+            const records = S.filter(s => gAtt[skey(s.email)]).map(s => ({ email: s.email, name: s.name || '', s: gAtt[skey(s.email)] }));
+            if (!records.length) { toast("Hech kimga belgi qo'yilmadi.", true); return; }
+            const data = { groupId: gId, ownerUid: me.uid, date: gDate, records, updatedAt: new Date().toISOString() };
+            try {
+                await db.collection('attendance').doc(gId + '_' + gDate).set(data);
+                const i = gAllAtt.findIndex(a => a.date === gDate); if (i >= 0) gAllAtt[i] = data; else gAllAtt.push(data);
+                toast('Davomat saqlandi.'); gRefresh();
+            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+        }
+        function gReport() {
+            if (!gAllAtt.length) return '';
+            const th = 'pb-2 px-2 text-center font-semibold';
+            const rows = (grp.students || []).map(s => {
+                const k = skey(s.email), c = { p: 0, l: 0, e: 0, a: 0 };
+                gAllAtt.forEach(a => { const r = (a.records || []).find(x => skey(x.email) === k); if (r && c[r.s] !== undefined) c[r.s]++; });
+                const tot = c.p + c.l + c.e + c.a, pct = tot ? Math.round((c.p + c.l) / tot * 100) : null;
+                const col = pct === null ? muted : pct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : pct >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400';
+                return `<tr class="border-t border-slate-200 dark:border-gray-700"><td class="py-2 pr-3 font-semibold">${esc(s.name)}</td>
+                    <td class="px-2 text-center">${c.p}</td><td class="px-2 text-center">${c.l}</td><td class="px-2 text-center">${c.e}</td><td class="px-2 text-center">${c.a}</td>
+                    <td class="px-2 text-center font-bold ${col}">${pct === null ? '-' : pct + '%'}</td></tr>`;
+            }).join('');
+            return `<h2 class="fd text-lg font-bold mt-10 mb-2">Hisobot</h2>
+                <p class="text-sm ${muted} mb-3"><span>Belgilangan kunlar:</span> <b>${gAllAtt.length}</b></p>
+                <div class="${card} p-4 overflow-x-auto"><table class="w-full text-sm"><thead><tr class="${muted}">
+                    <th class="pb-2 pr-3 text-left font-semibold">O'quvchi</th><th class="${th}">Keldi</th><th class="${th}">Kechikdi</th><th class="${th}">Sababli</th><th class="${th}">Kelmadi</th><th class="${th}">Davomat</th>
+                </tr></thead><tbody>${rows}</tbody></table></div>
+                <p class="text-xs ${muted} mt-2">Davomat foizida kechikkanlar ham kelgan deb hisoblanadi.</p>`;
+        }
+
+        // --- Tarix ---
+        function gHistory() {
+            if (!gLog.length) return `<p class="${muted}">Hali ball o'zgarishi yo'q.</p>`;
+            return `<ul class="space-y-2">${gLog.slice(0, 50).map(l => `
+                <li class="${card} px-4 py-3 flex items-center gap-3">
+                    <span class="font-bold w-16 shrink-0 ${l.delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${l.delta > 0 ? '+' : ''}${l.delta}</span>
+                    <div class="flex-1 min-w-0"><div class="font-semibold truncate">${esc(l.name)}</div>${l.reason ? `<div class="text-sm ${muted} truncate">${esc(l.reason)}</div>` : ''}</div>
+                    <div class="text-xs ${muted} text-right shrink-0"><div>${esc(l.teacherName || '')}</div><div>${fmtDT(l.createdAt)}</div></div>
+                </li>`).join('')}</ul>`;
+        }
+
         const tOut = () => auth.signOut();
-        Object.assign(window, { setMode, authGo, forgot, sendCode, go, sendReview, delCourse, lesson, prev, save, saveProfile, upl, chPw, tOut });
+        Object.assign(window, { setMode, authGo, forgot, sendCode, go, sendReview, delCourse, lesson, prev, save, saveProfile, upl, chPw, tOut,
+            gCreate, gSetTab, gSetAmt, gSetReason, gSearch, gAdd, gRemove, gDelete, gPts, gPtsAll, gSetDate, gSetAtt, gMarkAll, gSaveAtt });
         window.teacherLeave = function () { if (unsub) { unsub(); unsub = null; } };
         return function (pv) {
-            view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile' })[pv] || 'home';
+            view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile', 'teacher-groups': 'groups', 'teacher-group': 'group' })[pv] || 'home';
             if (!inited) {
                 inited = true;
                 fbApp = firebase.initializeApp(FIREBASE_CONFIG, 'teacher');
@@ -691,6 +967,51 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Guruhlar", "Groups", "Группы"],
+        ["Guruh yaratish", "Create group", "Создать группу"],
+        ["Guruh nomi", "Group name", "Название группы"],
+        ["Hali guruh yo'q.", "No groups yet.", "Пока нет групп."],
+        ["Guruh yarating, unga o'quvchilarni qo'shing, ball bering va davomat qiling.", "Create a group, add students, give points and take attendance.", "Создайте группу, добавьте учеников, начисляйте баллы и отмечайте посещаемость."],
+        ["o'quvchi", "students", "учеников"],
+        ["O'quvchilar va ballar", "Students and points", "Ученики и баллы"],
+        ["Davomat", "Attendance", "Посещаемость"],
+        ["Tarix", "History", "История"],
+        ["Ball miqdori", "Points", "Баллы"],
+        ["Sabab (ixtiyoriy)", "Reason (optional)", "Причина (необязательно)"],
+        ["Masalan: darsda faol qatnashdi", "For example: was active in class", "Например: активно работал на уроке"],
+        ["Hammasiga qo'shish", "Add to everyone", "Добавить всем"],
+        ["O'quvchi qo'shish", "Add a student", "Добавить ученика"],
+        ["Ism yoki email bo'yicha qidiring", "Search by name or email", "Поиск по имени или email"],
+        ["Kamida 2 ta harf yozing. Faqat saytda ro'yxatdan o'tgan o'quvchilar chiqadi.", "Type at least 2 characters. Only students registered on the site are shown.", "Введите минимум 2 символа. Показаны только ученики, зарегистрированные на сайте."],
+        ["O'quvchi topilmadi.", "No student found.", "Ученик не найден."],
+        ["Qo'shish", "Add", "Добавить"],
+        ["Guruhda o'quvchi yo'q. Pastdan qidirib qo'shing.", "No students in this group yet. Search below to add them.", "В группе нет учеников. Найдите и добавьте их ниже."],
+        ["Ball qo'shildi.", "Points added.", "Баллы добавлены."],
+        ["Ball ayirildi.", "Points deducted.", "Баллы списаны."],
+        ["Ball 0 dan kam bo'lmaydi.", "Points can't go below 0.", "Баллы не могут быть меньше 0."],
+        ["O'quvchi qo'shildi.", "Student added.", "Ученик добавлен."],
+        ["Guruh yaratildi.", "Group created.", "Группа создана."],
+        ["Guruh o'chirildi.", "Group deleted.", "Группа удалена."],
+        ["Guruhda ko'pi bilan 100 ta o'quvchi bo'ladi.", "A group can have at most 100 students.", "В группе может быть не больше 100 учеников."],
+        ["O'quvchini guruhdan chiqarasizmi? Uning ballari saqlanib qoladi.", "Remove this student from the group? Their points are kept.", "Убрать ученика из группы? Его баллы сохранятся."],
+        ["Guruhdagi hamma o'quvchiga ko'rsatilgan miqdorda ball qo'shilsinmi?", "Add this many points to every student in the group?", "Начислить указанные баллы каждому ученику группы?"],
+        ["Guruhni o'chirasizmi? Davomat yozuvlari ham o'chadi, o'quvchilarning ballari saqlanib qoladi.", "Delete this group? Its attendance records are deleted too; students' points are kept.", "Удалить группу? Записи посещаемости тоже удалятся, баллы учеников сохранятся."],
+        ["Guruh topilmadi.", "Group not found.", "Группа не найдена."],
+        ["Hammasi keldi", "Everyone present", "Все пришли"],
+        ["Keldi", "Present", "Пришёл"],
+        ["Kechikdi", "Late", "Опоздал"],
+        ["Sababli", "Excused", "Уважительная"],
+        ["Kelmadi", "Absent", "Не пришёл"],
+        ["Davomatni saqlash", "Save attendance", "Сохранить посещаемость"],
+        ["Bu sana uchun davomat saqlangan.", "Attendance for this date is saved.", "Посещаемость на эту дату сохранена."],
+        ["Davomat uchun avval guruhga o'quvchi qo'shing.", "Add students to the group before taking attendance.", "Сначала добавьте учеников в группу."],
+        ["Davomat saqlandi.", "Attendance saved.", "Посещаемость сохранена."],
+        ["Hech kimga belgi qo'yilmadi.", "No one is marked.", "Никто не отмечен."],
+        ["Hisobot", "Report", "Отчёт"],
+        ["Belgilangan kunlar:", "Days marked:", "Отмечено дней:"],
+        ["O'quvchi", "Student", "Ученик"],
+        ["Davomat foizida kechikkanlar ham kelgan deb hisoblanadi.", "Late students count as present in the attendance percentage.", "В проценте посещаемости опоздавшие считаются пришедшими."],
+        ["Hali ball o'zgarishi yo'q.", "No point changes yet.", "Изменений баллов пока нет."],
         ["Rad etish sababi:", "Rejection reason:", "Причина отклонения:"],
         ["EduFlow saytiga qaytish", "Back to EduFlow", "Вернуться на EduFlow"],
         ["Ustozlar", "Teachers", "Преподаватели"],

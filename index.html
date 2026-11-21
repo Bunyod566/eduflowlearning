@@ -1058,6 +1058,52 @@ const FIREBASE_CONFIG = {
 };
 
 let cloudDb = null;
+
+// ===== BALLAR: ustozlar beradi (teacher.html); o'quvchi profilida va sarlavhada ko'rinadi =====
+let myPoints = { key: '', balance: 0, log: [], state: 'off' }, myPointsUnsub = null;
+function pointsKey(email) { return encodeURIComponent(String(email || '').trim().toLowerCase()); }
+function ensureMyPoints() {
+    const key = currentUser && currentUser.email ? pointsKey(currentUser.email) : '';
+    if (key === myPoints.key && myPoints.state !== 'off') return;
+    if (myPointsUnsub) { myPointsUnsub(); myPointsUnsub = null; }
+    myPoints = { key, balance: 0, log: [], state: key && cloudDb ? 'loading' : 'off' };
+    if (!key || !cloudDb) { refreshMyPointsUI(); return; }
+    myPointsUnsub = cloudDb.collection('points').doc(key).onSnapshot(d => {
+        if (myPoints.key !== key) return;
+        myPoints.balance = d.exists ? (+d.data().balance || 0) : 0;
+        cloudDb.collection('pointLog').where('key', '==', key).get().then(s => {
+            if (myPoints.key !== key) return;
+            myPoints.log = s.docs.map(x => x.data()).sort((x, y) => (y.createdAt || '').localeCompare(x.createdAt || '')).slice(0, 20);
+            myPoints.state = 'ok'; refreshMyPointsUI();
+        }).catch(err => { console.warn('Ball tarixi:', err.message); if (myPoints.key === key) { myPoints.state = 'ok'; refreshMyPointsUI(); } });
+    }, err => { console.warn('Ballar:', err.message); if (myPoints.key === key) { myPoints.state = 'error'; refreshMyPointsUI(); } });
+}
+function refreshMyPointsUI() {
+    const h = document.getElementById('header-points');
+    if (h) { h.classList.toggle('hidden', myPoints.state !== 'ok'); const n = h.querySelector('.n'); if (n) n.textContent = myPoints.balance; }
+    const b = document.getElementById('my-points-body');
+    if (b) b.innerHTML = myPointsBodyHtml();
+}
+function myPointsBodyHtml() {
+    const s = myPoints.state, muted = 'text-sm text-gray-500 dark:text-gray-400';
+    if (s === 'off') return `<p class="${muted}">Ballarni ko'rish uchun internet aloqasi kerak.</p>`;
+    if (s === 'loading') return `<p class="${muted}">Yuklanmoqda...</p>`;
+    if (s === 'error') return `<p class="text-sm text-red-600 dark:text-red-400">Ballarni yuklab bo'lmadi.</p>`;
+    const two = n => String(n).padStart(2, '0');
+    const dt = iso => { const d = new Date(iso); return isNaN(d) ? '' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(); };
+    const list = myPoints.log.length
+        ? `<h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ball tarixi</h4><ul class="divide-y divide-gray-100 dark:divide-gray-700">${myPoints.log.map(l => `
+            <li class="py-2.5 flex items-center gap-3">
+                <span class="font-bold w-14 shrink-0 ${l.delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${l.delta > 0 ? '+' : ''}${l.delta}</span>
+                <div class="flex-1 min-w-0"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}</div></div>
+                <span class="text-xs text-gray-400 shrink-0">${dt(l.createdAt)}</span>
+            </li>`).join('')}</ul>`
+        : `<p class="${muted}">Hali ball yo'q. Ustozingiz darsdagi faolligingiz uchun ball beradi.</p>`;
+    return `<div class="flex items-center gap-4 mb-5">
+            <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0"><i class="fa-solid fa-coins text-3xl text-amber-500"></i></div>
+            <div><div class="text-4xl font-black text-gray-900 dark:text-white">${myPoints.balance}</div><div class="${muted}">Joriy ball</div></div>
+        </div>${list}`;
+}
 let cloudState = 'off'; // off | connecting | on | error
 
 function cloudConfigured() {
@@ -1531,6 +1577,7 @@ function updateHeaderAuthUI() {
                         <img src="${currentUser.avatar || 'https://picsum.photos/seed/user/100/100'}" class="w-6 h-6 rounded-full border border-blue-500">
                         <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">${currentUser.name}</span>
                                                 ${isPro}
+                        <span id="header-points" class="${myPoints.state === 'ok' ? '' : 'hidden '}flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400" title="Ballar"><i class="fa-solid fa-coins"></i><span class="n">${myPoints.balance}</span></span>
                     </button>
                 `;
         if (premiumBtn) {
@@ -1551,6 +1598,7 @@ function updateHeaderAuthUI() {
             document.getElementById('premium-btn-text').innerText = t.proSubscribe;
         }
     }
+    ensureMyPoints();
 }
 
 // NAVIGATION CONTROLLER
@@ -2457,6 +2505,11 @@ function renderProfile(container) {
                                 <i class="fa-solid fa-right-from-bracket"></i> Chiqish
                             </button>
                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4"><i class="fa-solid fa-coins text-amber-500"></i> <span>Mening ballarim</span></h3>
+                        <div id="my-points-body">${myPointsBodyHtml()}</div>
                     </div>
 
                     <div class="space-y-4">
@@ -3402,6 +3455,13 @@ function handleEditNameSubmit(e) {
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Mening ballarim", "My points", "Мои баллы"],
+        ["Joriy ball", "Current points", "Текущие баллы"],
+        ["Ball tarixi", "Points history", "История баллов"],
+        ["Hali ball yo'q. Ustozingiz darsdagi faolligingiz uchun ball beradi.", "No points yet. Your teacher gives points for being active in class.", "Баллов пока нет. Преподаватель начисляет баллы за активность на уроках."],
+        ["Ballarni yuklab bo'lmadi.", "Couldn't load points.", "Не удалось загрузить баллы."],
+        ["Ballarni ko'rish uchun internet aloqasi kerak.", "An internet connection is needed to see points.", "Чтобы увидеть баллы, нужно подключение к интернету."],
+        ["Ballar", "Points", "Баллы"],
         ["EduFlow saytiga qaytish", "Back to EduFlow", "Вернуться на EduFlow"],
         ["Ustozlar", "Teachers", "Преподаватели"],
         ["Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing (README.md, \"Ustozlar sayti: sozlash\").", "Access denied: add the teacher rules to Firestore Rules (README.md, \"Ustozlar sayti: sozlash\").", "Нет доступа: добавьте правила для преподавателей в Firestore Rules (README.md, «Ustozlar sayti: sozlash»)."],
