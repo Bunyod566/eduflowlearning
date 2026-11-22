@@ -995,7 +995,7 @@ let coursesList = generateCourses();
 })();
 
 function saveCoursesToStorage() {
-    localStorage.setItem('eduflow_courses', JSON.stringify(coursesList));
+    localStorage.setItem('eduflow_courses', JSON.stringify(coursesList.filter(c => !c.teacher)));
 }
 
 // APP STATE
@@ -1095,7 +1095,7 @@ function myPointsBodyHtml() {
         ? `<h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ball tarixi</h4><ul class="divide-y divide-gray-100 dark:divide-gray-700">${myPoints.log.map(l => `
             <li class="py-2.5 flex items-center gap-3">
                 <span class="font-bold w-14 shrink-0 ${l.delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${l.delta > 0 ? '+' : ''}${l.delta}</span>
-                <div class="flex-1 min-w-0"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}</div></div>
+                <div class="flex-1 min-w-0" translate="no"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}</div></div>
                 <span class="text-xs text-gray-400 shrink-0">${dt(l.createdAt)}</span>
             </li>`).join('')}</ul>`
         : `<p class="${muted}">Hali ball yo'q. Ustozingiz darsdagi faolligingiz uchun ball beradi.</p>`;
@@ -1464,7 +1464,120 @@ function submitComment(e) {
     });
 }
 
+// ===== USTOZ KURSLARI (teacher.html da yaratilib, admin tasdiqlagan) =====
+// Firestore teacherCourses (status 'approved') katalogga qo'shiladi. ID raqamli: 1 000 000 dan katta.
+const TC_MIN_ID = 1000000;
+let tcLoaded = false, tcSel = 0;
+function tcIdFor(docId) {
+    let h = 5381;
+    for (const ch of String(docId)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
+    return TC_MIN_ID + (h % 899000000);
+}
+const isTeacherCourse = c => !!(c && c.teacher);
+function tcToCourse(id, d) {
+    const lessons = (d.lessons || []).filter(l => l && l.title);
+    const c = {
+        id: tcIdFor(id), docId: id, teacher: true,
+        title: String(d.title || ''), category: categories.includes(d.category) ? d.category : categories[0],
+        level: d.level || '', instructor: d.ownerName || '', price: Math.max(0, Math.round(+d.price || 0)),
+        rating: null, reviewsCount: 0, lessons, lessonsCount: lessons.length,
+        description: String(d.description || ''), liked: false, inCart: false
+    };
+    c.image = /^(https?:|data:image\/)/i.test(d.image || '') ? d.image : courseImageFor({ title: c.title, category: c.category });
+    return c;
+}
+function startTeacherCourses() {
+    if (!cloudDb) { tcLoaded = true; return; }
+    cloudDb.collection('teacherCourses').where('status', '==', 'approved').onSnapshot(snap => {
+        const list = snap.docs.map(d => tcToCourse(d.id, d.data())).sort((a, b) => a.title.localeCompare(b.title));
+        coursesList = coursesList.filter(c => !isTeacherCourse(c)).concat(list);
+        // savatdagi ustoz kurslarini yangilash (narx o'zgargan yoki kurs olib tashlangan bo'lsa)
+        const byId = new Map(list.map(c => [c.id, c]));
+        const before = cart.length;
+        cart = cart.filter(it => !isTeacherCourse(it) || byId.has(it.id)).map(it => isTeacherCourse(it) ? byId.get(it.id) : it);
+        if (cart.length !== before || cart.some(isTeacherCourse)) { localStorage.setItem('eduflow_cart', JSON.stringify(cart)); updateCartAndBookmarkCounts(); }
+        tcLoaded = true;
+        if (['home', 'catalog', 'details', 'tasks', 'profile'].includes(currentView)) {
+            renderView(currentView, currentView === 'details' ? selectedCourseId : null);
+            if (window.applyI18nAll) window.applyI18nAll();
+        }
+    }, err => { console.warn('Ustoz kurslari:', err.message); tcLoaded = true; });
+}
+
+function tcCanWatch(course, i) { return i === 0 || isPurchased(course.id); }
+function tcVideoBlock(course) {
+    const L = course.lessons, l = L[tcSel];
+    if (!l) return '';
+    if (!tcCanWatch(course, tcSel)) return `<div class="aspect-video w-full rounded-3xl bg-gradient-to-br from-gray-800 to-gray-900 flex flex-col items-center justify-center gap-4 text-white text-center p-6">
+            <i class="fa-solid fa-lock text-5xl text-white/70"></i>
+            <p class="font-semibold">Bu dars kursni sotib olgandan keyin ochiladi.</p>
+            <button onclick="addToCart(${course.id})" class="px-5 py-2.5 bg-white text-blue-700 font-bold rounded-xl">Savatchaga Qo'shish</button></div>`;
+    const v = renderCourseVideo({ videoUrl: l.video });
+    return v || `<div class="aspect-video w-full rounded-3xl bg-gray-800 flex items-center justify-center text-white/70 text-sm p-6 text-center">Bu dars uchun video havolasi noto'g'ri.</div>`;
+}
+function tcSelect(i) {
+    tcSel = i;
+    const course = coursesList.find(c => c.id === selectedCourseId);
+    if (!course) return;
+    const box = document.getElementById('tc-video'); if (box) box.innerHTML = tcVideoBlock(course);
+    const list = document.getElementById('tc-lessons'); if (list) list.innerHTML = tcLessonsHtml(course);
+    initCourseVideoPlayer();
+    if (window.applyI18nAll) window.applyI18nAll();
+}
+function tcLessonsHtml(course) {
+    return course.lessons.map((l, i) => {
+        const open = tcCanWatch(course, i), on = i === tcSel;
+        return `<li><button onclick="tcSelect(${i})" class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border ${on ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-400'} transition" aria-current="${on}">
+            <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${on ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}">${i + 1}</span>
+            <span translate="no" class="flex-1 min-w-0 font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.title)}</span>
+            ${i === 0 && !isPurchased(course.id) ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Bepul</span>` : ''}
+            ${l.minutes ? `<span class="text-xs text-gray-400 shrink-0">${+l.minutes} daq.</span>` : ''}
+            <i class="fa-solid ${open ? 'fa-circle-play text-blue-500' : 'fa-lock text-gray-400'} shrink-0"></i></button></li>`;
+    }).join('');
+}
+function renderTeacherCourseDetails(container, course) {
+    const isInCart = cart.some(item => item.id === course.id), owned = isPurchased(course.id);
+    if (tcSel >= course.lessons.length) tcSel = 0;
+    const mins = course.lessons.reduce((s, l) => s + (+l.minutes || 0), 0);
+    container.innerHTML = `
+        <div class="py-8 max-w-5xl mx-auto space-y-8">
+            <button onclick="navigateTo('catalog')" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">&larr; Katalogga qaytish</button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-6">
+                    <h1 translate="no" class="text-3xl font-black text-gray-900 dark:text-white">${escapeHtml(course.title)}</h1>
+                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                        <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold rounded-lg">${escapeHtml(course.category)}</span>
+                        ${course.level ? `<span>${escapeHtml(course.level)}</span>` : ''}
+                        <span translate="no"><i class="fa-solid fa-user-tie mr-1"></i>${escapeHtml(course.instructor)}</span>
+                        <span><i class="fa-solid fa-play-circle text-blue-500 mr-1"></i>${course.lessons.length} ta dars${mins ? ` · ${mins} daq.` : ''}</span>
+                    </div>
+                    <div id="tc-video">${tcVideoBlock(course)}</div>
+                    <div><h3 class="text-xl font-bold mb-3 text-gray-900 dark:text-white">Darslar</h3><ol id="tc-lessons" class="space-y-2">${tcLessonsHtml(course)}</ol></div>
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Kurs Haqida</h3>
+                        <p translate="no" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">${escapeHtml(course.description)}</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xl h-fit space-y-4 sticky top-24">
+                    <span class="inline-block px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-xs font-bold"><i class="fa-solid fa-chalkboard-user mr-1"></i>Ustoz kursi</span>
+                    <div class="text-3xl font-black text-blue-600 dark:text-blue-400">${course.price.toLocaleString()} UZS</div>
+                    ${owned ? `<div class="w-full py-3.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-bold rounded-xl flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i><span>Sotib olingan</span></div>`
+            : `<button onclick="addToCart(${course.id})" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid ${isInCart ? 'fa-check' : 'fa-cart-plus'}"></i><span>${isInCart ? 'Savatchada' : 'Savatchaga Qo\'shish'}</span></button>`}
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Birinchi dars bepul. Qolganlari kursni sotib olgandan keyin ochiladi. PRO obunaga kirmaydi.</p>
+                </div>
+            </div>
+        </div>`;
+    initCourseVideoPlayer();
+}
+function renderTeacherCourseLoading(container) {
+    container.innerHTML = `<div class="py-20 text-center text-gray-500 dark:text-gray-400">${tcLoaded
+        ? `<p class="font-semibold">Kurs topilmadi yoki hozir sotuvda emas.</p><button onclick="navigateTo('catalog')" class="mt-4 px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl">Katalogga qaytish</button>`
+        : `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Yuklanmoqda...`}</div>`;
+}
+
 initCloud();
+startTeacherCourses();
 initComments();
 // Avval ro'yxatdan o'tgan (reyestrda yo'q) foydalanuvchini ham qo'shib qo'yish
 registerUserInRegistry(currentUser);
@@ -1981,16 +2094,16 @@ function renderCourseCard(course) {
                             </span>
                         </div>
                         <div class="p-5">
-                            <div class="flex items-center gap-1.5 text-amber-500 text-xs font-bold mb-2">
+                            ${course.teacher ? `<div class="flex items-center gap-1.5 text-violet-600 dark:text-violet-400 text-xs font-bold mb-2"><i class="fa-solid fa-chalkboard-user"></i><span>Ustoz kursi</span></div>` : `<div class="flex items-center gap-1.5 text-amber-500 text-xs font-bold mb-2">
                                 <i class="fa-solid fa-star"></i>
                                 <span>${course.rating}</span>
                                 <span class="text-gray-400 font-normal">(${course.reviewsCount} ${t.reviews})</span>
-                            </div>
-                            <h3 onclick="navigateTo('details', ${course.id})" class="font-bold text-gray-900 dark:text-white text-base mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer line-clamp-2">
+                            </div>`}
+                            <h3 ${course.teacher ? 'translate="no"' : ''} onclick="navigateTo('details', ${course.id})" class="font-bold text-gray-900 dark:text-white text-base mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer line-clamp-2">
                                 ${course.title}
                             </h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-tie text-gray-400"></i> ${course.instructor}
+                            <p ${course.teacher ? 'translate="no"' : ''} class="text-xs text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-tie text-gray-400"></i> ${course.teacher ? escapeHtml(course.instructor) : course.instructor}
                             </p>
                         </div>
                     </div>
@@ -2424,7 +2537,14 @@ function renderLessonSection(course) {
             </div>`;
 }
 
+let tcLastId = null;
 function renderDetails(container, courseId) {
+    if (courseId >= TC_MIN_ID) {
+        if (tcLastId !== courseId) { tcLastId = courseId; tcSel = 0; }
+        const tc = coursesList.find(c => c.id === courseId);
+        if (tc) renderTeacherCourseDetails(container, tc); else renderTeacherCourseLoading(container);
+        return;
+    }
     const course = coursesList.find(c => c.id === courseId) || coursesList[0];
     const isInCart = cart.some(item => item.id === course.id);
 
@@ -2921,6 +3041,7 @@ async function openPaymentChooser() {
         if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j && Array.isArray(j.providers)) cfg = j; }
     } catch (e) { /* server yo'q (masalan Live Server) */ }
     if (!cfg || !cfg.providers.length) { openCardModal(); return; } // DEMO rejimi
+    if (cart.some(c => c.teacher)) { alert("Ustoz kurslari uchun Payme / Click / Uzum orqali to'lov hali ulanmagan. Ustoz kurslarini savatdan olib tashlab, alohida urinib ko'ring."); return; }
     renderPayChooser(cfg);
 }
 
@@ -3455,6 +3576,15 @@ function handleEditNameSubmit(e) {
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Ustoz kursi", "Teacher course", "Курс преподавателя"],
+        ["Bepul", "Free", "Бесплатно"],
+        ["Sotib olingan", "Purchased", "Куплено"],
+        ["Bu dars kursni sotib olgandan keyin ochiladi.", "This lesson unlocks after you buy the course.", "Этот урок откроется после покупки курса."],
+        ["Bu dars uchun video havolasi noto'g'ri.", "The video link for this lesson is invalid.", "Ссылка на видео для этого урока неверна."],
+        ["Birinchi dars bepul. Qolganlari kursni sotib olgandan keyin ochiladi. PRO obunaga kirmaydi.", "The first lesson is free. The rest unlock after purchase. Not included in PRO.", "Первый урок бесплатный. Остальные откроются после покупки. Не входит в PRO."],
+        ["Kurs topilmadi yoki hozir sotuvda emas.", "Course not found or not on sale right now.", "Курс не найден или сейчас не продаётся."],
+        ["Katalogga qaytish", "Back to catalog", "Вернуться в каталог"],
+        ["Ustoz kurslari uchun Payme / Click / Uzum orqali to'lov hali ulanmagan. Ustoz kurslarini savatdan olib tashlab, alohida urinib ko'ring.", "Payme / Click / Uzum payment isn't connected for teacher courses yet. Remove teacher courses from the cart and try again.", "Оплата через Payme / Click / Uzum для курсов преподавателей ещё не подключена. Уберите их из корзины и попробуйте снова."],
         ["Mening ballarim", "My points", "Мои баллы"],
         ["Joriy ball", "Current points", "Текущие баллы"],
         ["Ball tarixi", "Points history", "История баллов"],
@@ -3766,7 +3896,9 @@ function handleEditNameSubmit(e) {
     }
     const L = () => (typeof currentLang !== 'undefined' && currentLang) || 'uz';
 
+    const noTr = n => { const e = n.nodeType === 1 ? n : n.parentElement; return !!(e && e.closest && e.closest('[translate="no"]')); };
     function doText(n) {
+        if (noTr(n)) return;
         const cur = n.nodeValue, lang = L();
         const src = (n.__t !== undefined && cur === n.__t) ? n.__o : cur;
         const t = tr(src, lang);
@@ -3796,10 +3928,10 @@ function handleEditNameSubmit(e) {
         if (root.nodeType === 3) { doText(root); return; }
         if (root.nodeType !== 1) return;
         const tag = root.tagName;
-        if (tag === 'SCRIPT' || tag === 'STYLE') return;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || noTr(root)) return;
         doEl(root);
         const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-            acceptNode: n => (n.nodeType === 1 && (n.tagName === 'SCRIPT' || n.tagName === 'STYLE')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            acceptNode: n => (n.nodeType === 1 && (n.tagName === 'SCRIPT' || n.tagName === 'STYLE' || n.getAttribute('translate') === 'no')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
         });
         let n;
         while ((n = w.nextNode())) { if (n.nodeType === 3) doText(n); else doEl(n); }
