@@ -774,7 +774,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
         }
         const gBody = () => gTab === 'att' ? gAttendance() : gTab === 'log' ? gHistory() : gStudents();
         function gRefresh() { const b = $('#g-body'); if (b && view === 'group' && grp) b.innerHTML = gBody(); }
-        function gSetTab(k) { gTab = k; render(); }
+        function gSetTab(k) { ptsClose(); gTab = k; render(); }
 
         async function gLoad() {
             if (!grp || !me) return;
@@ -799,10 +799,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
         // --- O'quvchilar va ballar ---
         function gStudents() {
             const S = grp.students || [];
-            const panel = `<div class="${card} p-4 mb-6 flex flex-wrap items-end gap-3">
-                <div><label class="text-sm font-semibold" for="g-amt">Ball miqdori</label><input id="g-amt" type="number" min="1" max="1000" value="${gAmt}" oninput="gSetAmt(this.value)" class="tinp mt-1 w-28"></div>
-                <div class="flex-1 min-w-[12rem]"><label class="text-sm font-semibold" for="g-reason">Sabab (ixtiyoriy)</label><input id="g-reason" maxlength="100" value="${esc(gReason)}" oninput="gSetReason(this.value)" class="tinp mt-1" placeholder="Masalan: darsda faol qatnashdi"></div>
-                <button onclick="gPtsAll()" class="tbtn tbg" ${S.length ? '' : 'disabled'}><i class="fa-solid fa-users mr-2"></i>Hammasiga qo'shish</button></div>`;
+            const panel = S.length ? `<div class="flex justify-end mb-4"><button onclick="gPtsAll()" class="tbtn tbg"><i class="fa-solid fa-users mr-2"></i>Hammasiga qo'shish</button></div>` : '';
             const list = S.length ? `<ul class="space-y-2">${S.map((s, i) => `
                 <li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
                     <span class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold shrink-0">${ini(s.name)}</span>
@@ -819,8 +816,6 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
                 <div id="g-found" class="mt-2 space-y-1">${gFoundHtml()}</div></div>`;
             return panel + list + find;
         }
-        const gSetAmt = v => { gAmt = Math.min(1000, Math.max(1, parseInt(v, 10) || 1)); };
-        const gSetReason = v => { gReason = String(v).slice(0, 100); };
 
         function gFoundHtml() {
             if (gFind.trim().length < 2) return `<p class="text-xs ${muted}">Kamida 2 ta harf yozing. Faqat saytda ro'yxatdan o'tgan o'quvchilar chiqadi.</p>`;
@@ -880,27 +875,74 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             if (out.real) gLog.unshift({ name: st.name, delta: out.real, reason: reason || '', teacherName: prof.name || me.email, createdAt: out.now });
             return out;
         }
-        async function gPts(i, sign) {
-            const st = (grp && grp.students || [])[i]; if (!st || gBusy) return;
-            gBusy = true;
-            try {
-                const r = await changePoints(st, sign * gAmt, gReason.trim());
-                if (!r.real) toast("Ball 0 dan kam bo'lmaydi.", true);
-                else {
-                    gBal[skey(st.email)] = r.nb;
-                    const el = $('#g-bal-' + i); if (el) el.textContent = r.nb;
-                    toast(sign > 0 ? "Ball qo'shildi." : 'Ball ayirildi.');
-                }
-            } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
-            gBusy = false;
+        // --- Ball modal oynasi: 1-qator miqdor, 2-qator izoh ---
+        let ptsCtx = null;
+        function gPts(i, sign) {
+            const st = (grp && grp.students || [])[i]; if (!st) return;
+            ptsOpen({ i, sign, st });
         }
-        async function gPtsAll() {
-            const S = (grp && grp.students) || []; if (!S.length || gBusy) return;
-            if (!confirm("Guruhdagi hamma o'quvchiga ko'rsatilgan miqdorda ball qo'shilsinmi?")) return;
-            gBusy = true;
-            try { for (const st of S) { const r = await changePoints(st, gAmt, gReason.trim()); gBal[skey(st.email)] = r.nb; } toast("Ball qo'shildi."); }
-            catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
-            gBusy = false; gRefresh();
+        function gPtsAll() {
+            const S = (grp && grp.students) || []; if (!S.length) return;
+            ptsOpen({ all: true, sign: 1, n: S.length });
+        }
+        function ptsOpen(ctx) {
+            ptsClose();
+            ptsCtx = ctx;
+            const add = ctx.sign > 0;
+            const title = ctx.all ? "Hammasiga ball qo'shish" : add ? "Ball qo'shish" : 'Ball ayirish';
+            const who = ctx.all ? `<span>${ctx.n}</span> <span>ta o'quvchiga</span>` : `<span translate="no">${esc(ctx.st.name)}</span>${add ? '' : ` · <span>hozir</span> <b>${gBal[skey(ctx.st.email)] || 0}</b> <span>ball</span>`}`;
+            const chips = [1, 5, 10, 20, 50].map(n => `<button type="button" onclick="ptsChip(${n})" class="tbtn tbg !px-3 !py-1">${n}</button>`).join('');
+            document.body.insertAdjacentHTML('beforeend', `
+            <div id="pts-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onmousedown="if(event.target===this)ptsClose()">
+                <form novalidate onsubmit="ptsSubmit(event)" role="dialog" aria-modal="true" aria-labelledby="pts-title"
+                    class="bg-white dark:bg-gray-800 text-slate-800 dark:text-gray-100 rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-slate-200 dark:border-gray-700">
+                    <div class="flex items-start gap-3 mb-5">
+                        <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${add ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/40 text-rose-600'}"><i class="fa-solid ${add ? 'fa-plus' : 'fa-minus'}"></i></span>
+                        <div class="min-w-0"><h2 id="pts-title" class="fd text-lg font-bold leading-tight">${title}</h2><p class="text-sm ${muted} mt-1 truncate">${who}</p></div>
+                    </div>
+                    <label for="pts-amt" class="text-sm font-semibold">Necha ball</label>
+                    <input id="pts-amt" type="number" inputmode="numeric" min="1" max="1000" step="1" required value="${gAmt}" class="tinp mt-1 text-lg font-bold">
+                    <div class="flex flex-wrap gap-1.5 mt-2">${chips}</div>
+                    <label for="pts-reason" class="text-sm font-semibold block mt-4">Nima uchun (izoh)</label>
+                    <input id="pts-reason" maxlength="100" class="tinp mt-1" placeholder="Masalan: darsda faol qatnashdi" autocomplete="off">
+                    <p id="pts-err" class="text-sm text-rose-600 dark:text-rose-400 min-h-[1.25rem] mt-2" role="alert"></p>
+                    <div class="flex justify-end gap-2 mt-2">
+                        <button type="button" onclick="ptsClose()" class="tbtn tbg">Bekor qilish</button>
+                        <button id="pts-go" class="tbtn text-white ${add ? 'bg-emerald-600' : 'bg-rose-600'}">${add ? "Qo'shish" : 'Ayirish'}</button>
+                    </div>
+                </form>
+            </div>`);
+            if (window.applyI18nAll) window.applyI18nAll();
+            const a = $('#pts-amt'); a.focus(); a.select();
+            document.addEventListener('keydown', ptsKey);
+        }
+        function ptsKey(e) { if (e.key === 'Escape') ptsClose(); }
+        function ptsChip(n) { const a = $('#pts-amt'); if (a) { a.value = n; $('#pts-reason').focus(); } }
+        function ptsClose() {
+            document.removeEventListener('keydown', ptsKey);
+            const m = $('#pts-modal'); if (m) m.remove();
+            ptsCtx = null;
+        }
+        async function ptsSubmit(e) {
+            e.preventDefault();
+            const ctx = ptsCtx; if (!ctx || gBusy) return;
+            const amt = parseInt($('#pts-amt').value, 10), reason = $('#pts-reason').value.trim().slice(0, 100);
+            if (!(amt >= 1 && amt <= 1000)) { $('#pts-err').textContent = "1 dan 1000 gacha son kiriting."; $('#pts-amt').focus(); return; }
+            gAmt = amt; gBusy = true;
+            const btn = $('#pts-go'); btn.disabled = true; btn.classList.add('opacity-60');
+            try {
+                if (ctx.all) {
+                    for (const st of (grp.students || [])) { const r = await changePoints(st, amt, reason); gBal[skey(st.email)] = r.nb; }
+                    ptsClose(); toast("Ball qo'shildi."); gRefresh();
+                } else {
+                    const r = await changePoints(ctx.st, ctx.sign * amt, reason);
+                    if (!r.real) { $('#pts-err').textContent = "Ball 0 dan kam bo'lmaydi."; btn.disabled = false; btn.classList.remove('opacity-60'); gBusy = false; return; }
+                    gBal[skey(ctx.st.email)] = r.nb;
+                    const el = $('#g-bal-' + ctx.i); if (el) el.textContent = r.nb;
+                    ptsClose(); toast(ctx.sign > 0 ? "Ball qo'shildi." : 'Ball ayirildi.');
+                }
+            } catch (x) { const er = $('#pts-err'); if (er) er.textContent = 'Saqlanmadi. ' + fsErr(x); if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); } }
+            gBusy = false;
         }
 
         // --- Davomat ---
@@ -975,7 +1017,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
 
         const tOut = () => auth.signOut();
         Object.assign(window, { setMode, authGo, forgot, sendCode, go, sendReview, delCourse, lesson, prev, save, saveProfile, upl, chPw, tOut,
-            gCreate, gSetTab, gSetAmt, gSetReason, gSearch, gAdd, gRemove, gDelete, gPts, gPtsAll, gSetDate, gSetAtt, gMarkAll, gSaveAtt });
+            gCreate, gSetTab, ptsClose, ptsChip, ptsSubmit, gSearch, gAdd, gRemove, gDelete, gPts, gPtsAll, gSetDate, gSetAtt, gMarkAll, gSaveAtt });
         window.teacherLeave = function () { if (unsub) { unsub(); unsub = null; } };
         return function (pv) {
             view = ({ 'teacher': 'home', 'teacher-courses': 'courses', 'teacher-edit': 'edit', 'teacher-profile': 'profile', 'teacher-groups': 'groups', 'teacher-group': 'group' })[pv] || 'home';
@@ -998,6 +1040,17 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],
+        ["Ball qo'shish", "Add points", "Начислить баллы"],
+        ["Ball ayirish", "Deduct points", "Списать баллы"],
+        ["Necha ball", "How many points", "Сколько баллов"],
+        ["Nima uchun (izoh)", "What for (comment)", "За что (комментарий)"],
+        ["Bekor qilish", "Cancel", "Отмена"],
+        ["Ayirish", "Deduct", "Списать"],
+        ["ta o'quvchiga", "students", "ученикам"],
+        ["hozir", "now", "сейчас"],
+        ["ball", "points", "баллов"],
+        ["1 dan 1000 gacha son kiriting.", "Enter a number from 1 to 1000.", "Введите число от 1 до 1000."],
         ["Akkauntingiz tasdiqlanishini kutmoqda", "Your account is awaiting approval", "Ваш аккаунт ожидает подтверждения"],
         ["Akkauntingiz tasdiqlanmadi", "Your account was not approved", "Ваш аккаунт не одобрен"],
         ["Admin ustoz akkauntingizni tasdiqlamadi. Savollar bo'lsa, EduFlow bilan bog'laning.", "The admin did not approve your teacher account. Contact EduFlow if you have questions.", "Администратор не одобрил ваш аккаунт преподавателя. Если есть вопросы, свяжитесь с EduFlow."],
