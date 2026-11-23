@@ -4244,6 +4244,23 @@ function handleEditNameSubmit(e) {
     window.addEventListener('load', applyAll);
 })();
     </script>
+
+    <script>
+    // Fayl nomini tekshirish: boshqa fayl nomi ostida ochilsa ogohlantiradi
+    (function () {
+        var f = (location.pathname.split('/').pop() || '').toLowerCase().replace(/\.html$/, '');
+        var ok = ['', 'index', 'payment'];
+        if (location.protocol === 'file:' || ok.indexOf(f) !== -1) return;
+        function show() {
+            var d = document.createElement('div');
+            d.setAttribute('role', 'alert');
+            d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#dc2626;color:#fff;font:600 15px/1.5 system-ui,sans-serif;padding:12px 16px;text-align:center';
+            d.textContent = "Diqqat: bu manzilda noto'g'ri fayl turibdi. \"" + f + ".html\" ichida bosh sahifa (index.html) kodi bor. GitHub'ga to'g'ri faylni qayta yuklang.";
+            document.body.appendChild(d);
+        }
+        if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+    })();
+    </script>
 </body>
 
 </html>
