@@ -1454,7 +1454,7 @@
             return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        // O'chirilgan akkountga kirgan foydalanuvchiga qizil ogohlantirish chiqarish
+        // O'chirilgan akkauntga kirgan foydalanuvchiga qizil ogohlantirish chiqarish
         function checkAccountStatus() {
             const banner = document.getElementById('account-missing-banner');
             if (!banner) return;
