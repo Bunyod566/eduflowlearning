@@ -38,6 +38,10 @@ O'quvchi o'z ballarini asosiy saytda ko'radi: sarlavhadagi tanga belgisi va Prof
 
 Firestore kolleksiyalari: `groups`, `points` (kaliti o'quvchi emaili), `pointLog`, `attendance`.
 
+## Edu-Shop
+Asosiy saytning sarlavhasida **Edu-Shop** (`index.html#/shop`): o'quvchi ustozlardan olgan ballarini texnika, kitob va sovg'alarga almashtiradi. Buyurtma "kutilmoqda" holatida tushadi va shu ball "band qilingan" bo'ladi. Admin `admin.html` dagi **Edu-Shop buyurtmalari** bo'limida sovg'ani topshirganda **Topshirish** ni bosadi va ball shunda yechiladi (ball tarixida "Edu-Shop: ..." bo'lib ko'rinadi). Rad etilsa, ball qaytadi.
+Mahsulotlar ro'yxati kod ichida (`SHOP_ITEMS`): uni `index.html` va `admin.html` da bir xil o'zgartirish kerak. Firestore kolleksiyasi: `shopOrders`.
+
 ## Ustoz akkauntlarini tasdiqlash
 Yangi ustoz ro'yxatdan o'tganda akkaunti "kutmoqda" holatida bo'ladi: u faqat profilini to'ldira oladi. Admin `admin.html` dagi **Ustozlar** bo'limida tasdiqlaydi, rad etadi yoki bloklaydi (sabab bilan). Tasdiqlangunga qadar ustoz kurs yarata olmaydi, ball bera olmaydi va davomat qila olmaydi; buni Firestore qoidalari ham tekshiradi. Avval ro'yxatdan o'tgan ustozlar ham bir marta tasdiqlanishi kerak.
 
@@ -125,10 +129,10 @@ service cloud.firestore {
       allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
     }
 
-    // O'quvchi ballari: hamma ko'radi, faqat tasdiqlangan ustozlar o'zgartiradi, 0 dan kam bo'lmaydi
+    // O'quvchi ballari: hamma ko'radi, tasdiqlangan ustozlar va admin (Edu-Shop) o'zgartiradi, 0 dan kam bo'lmaydi
     match /points/{key} {
       allow read: if true;
-      allow create, update: if teacher()
+      allow create, update: if (teacher() || admin())
         && request.resource.data.balance is int
         && request.resource.data.balance >= 0;
       allow delete: if admin();
@@ -137,7 +141,7 @@ service cloud.firestore {
     // Ball tarixi: faqat qo'shiladi, keyin o'zgartirib bo'lmaydi
     match /pointLog/{id} {
       allow read: if true;
-      allow create: if teacher()
+      allow create: if (teacher() || admin())
         && request.resource.data.teacherUid == request.auth.uid
         && request.resource.data.delta is int;
       allow delete: if admin();
@@ -155,6 +159,18 @@ service cloud.firestore {
 
     // orders va txnIndex: faqat to'lov serveri kiradi, saytdan yopiq.
     // Qolgan hamma narsa ham yopiq.
+
+    // Edu-Shop buyurtmalari: o'quvchi 'pending' buyurtma yuboradi, faqat admin topshiradi yoki rad etadi
+    match /shopOrders/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.key is string
+        && request.resource.data.itemId is string
+        && request.resource.data.price is int
+        && request.resource.data.price > 0
+        && request.resource.data.get('note', '').size() <= 120;
+      allow update, delete: if admin();
+    }
   }
 }
 ```

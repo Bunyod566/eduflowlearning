@@ -311,6 +311,8 @@
                 </a>
                 <a href="#/tasks" class="hover:text-blue-600 dark:hover:text-blue-400 transition"
                     id="nav-tasks">Topshiriqlar</a>
+                <a href="#/shop" class="hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5"
+                    id="nav-shop"><i class="fa-solid fa-gift text-pink-500"></i> Edu-Shop</a>
                 <a href="#/contact" class="hover:text-blue-600 dark:hover:text-blue-400 transition"
                     id="nav-contact">Aloqa</a>
             </nav>
@@ -381,6 +383,7 @@
                                 id="footer-pricing">PRO Tariflar</a></li>
                         <li><a href="#/tasks" class="hover:text-white transition"
                                 id="footer-tasks">Topshiriqlar</a></li>
+                        <li><a href="#/shop" class="hover:text-white transition">Edu-Shop</a></li>
                         <li><a href="#/contact" class="hover:text-white transition"
                                 id="footer-contact">Aloqa</a></li>
                     </ul>
@@ -1013,7 +1016,7 @@ let currentLang = localStorage.getItem('eduflow_lang') || 'uz';
 // Ustozlar sayti alohida fayl: teacher.html. To'lovdan qaytish: /payment.html?order=...
 let PAGE_VIEW = 'home';
 let bootIsPayment = /payment\.html$/i.test(location.pathname);
-const ROUTE_NAMES = { '': 'home', catalog: 'catalog', pricing: 'pricing', course: 'details', profile: 'profile', tasks: 'tasks', contact: 'contact', payment: 'payment' };
+const ROUTE_NAMES = { '': 'home', catalog: 'catalog', pricing: 'pricing', course: 'details', profile: 'profile', tasks: 'tasks', contact: 'contact', payment: 'payment', shop: 'shop' };
 function parseRoute() {
     if (bootIsPayment) {
         if (!location.hash) return { view: 'payment', arg: '' };
@@ -1088,7 +1091,8 @@ function refreshMyPointsUI() {
     if (b) b.innerHTML = myPointsBodyHtml();
     const hh = document.getElementById('my-points-history');
     if (hh) hh.innerHTML = myPointsHistoryHtml();
-    if ((b || hh) && window.applyI18nAll) window.applyI18nAll();
+    if (currentView === 'shop') renderShopBody();
+    if ((b || hh || currentView === 'shop') && window.applyI18nAll) window.applyI18nAll();
 }
 function myPointsStatusHtml() {
     const s = myPoints.state, muted = 'text-sm text-gray-500 dark:text-gray-400';
@@ -1119,6 +1123,188 @@ function myPointsHistoryHtml() {
                 <div class="flex-1 min-w-0" translate="no"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}${l.groupName && l.reason ? ' · ' + escapeHtml(l.groupName) : ''}</div></div>
                 <span class="text-xs text-gray-400 shrink-0 text-right">${dt(l.createdAt)}</span>
             </li>`).join('')}</ul>`;
+}
+
+// ===== EDU-SHOP: o'quvchi ballarini sovg'alarga almashtiradi =====
+// Buyurtma Firestore shopOrders ga 'pending' bo'lib tushadi; admin topshirganda ball yechiladi.
+// Mahsulotlar ro'yxati admin.html dagi SHOP_ITEMS bilan bir xil bo'lishi kerak.
+const SHOP_ITEMS = [
+    { id: 'stickers', cat: 'gifts', icon: 'fa-note-sticky', price: 100, n: ["EduFlow stikerlari", "EduFlow stickers", "Стикеры EduFlow"], d: ["10 ta stiker to'plami", "Pack of 10 stickers", "Набор из 10 стикеров"] },
+    { id: 'pens', cat: 'gifts', icon: 'fa-pen', price: 150, n: ["Ruchka va daftar", "Pen and notebook", "Ручка и блокнот"], d: ["EduFlow logotipli to'plam", "Set with EduFlow logo", "Набор с логотипом EduFlow"] },
+    { id: 'cap', cat: 'gifts', icon: 'fa-hat-cowboy', price: 400, n: ["Kepka", "Cap", "Кепка"], d: ["EduFlow logotipli kepka", "Cap with EduFlow logo", "Кепка с логотипом EduFlow"] },
+    { id: 'thermos', cat: 'gifts', icon: 'fa-mug-hot', price: 500, n: ["Termos", "Thermos", "Термос"], d: ["0,5 litr, logotipli", "0.5 L, with logo", "0,5 л, с логотипом"] },
+    { id: 'flash', cat: 'tech', icon: 'fa-sd-card', price: 500, n: ["Fleshka 32 GB", "32 GB flash drive", "Флешка 32 ГБ"], d: ["USB 3.0 fleshka", "USB 3.0 flash drive", "Флешка USB 3.0"] },
+    { id: 'tshirt', cat: 'gifts', icon: 'fa-shirt', price: 600, n: ["Futbolka", "T-shirt", "Футболка"], d: ["EduFlow logotipli futbolka", "T-shirt with EduFlow logo", "Футболка с логотипом EduFlow"] },
+    { id: 'mouse', cat: 'tech', icon: 'fa-computer-mouse', price: 700, n: ["Simsiz sichqoncha", "Wireless mouse", "Беспроводная мышь"], d: ["Bluetooth sichqoncha", "Bluetooth mouse", "Bluetooth-мышь"] },
+    { id: 'book-qodiriy', cat: 'books', icon: 'fa-book', price: 700, n: ["Kitob: O'tkan kunlar", "Book: O'tkan kunlar", "Книга: «Минувшие дни»"], d: ["Abdulla Qodiriy", "Abdulla Qodiriy", "Абдулла Кадыри"] },
+    { id: 'book-habits', cat: 'books', icon: 'fa-book', price: 900, n: ["Kitob: Atom odatlar", "Book: Atomic Habits", "Книга: «Атомные привычки»"], d: ["Jeyms Klir", "James Clear", "Джеймс Клир"] },
+    { id: 'book-richdad', cat: 'books', icon: 'fa-book', price: 900, n: ["Kitob: Boy ota, kambag'al ota", "Book: Rich Dad Poor Dad", "Книга: «Богатый папа, бедный папа»"], d: ["Robert Kiyosaki", "Robert Kiyosaki", "Роберт Кийосаки"] },
+    { id: 'book-grammar', cat: 'books', icon: 'fa-book-open', price: 1100, n: ["Kitob: English Grammar in Use", "Book: English Grammar in Use", "Книга: English Grammar in Use"], d: ["Raymond Merfi, ingliz tili grammatikasi", "Raymond Murphy, English grammar", "Рэймонд Мёрфи, грамматика английского"] },
+    { id: 'backpack', cat: 'gifts', icon: 'fa-briefcase', price: 1200, n: ["Ryukzak", "Backpack", "Рюкзак"], d: ["Noutbuk uchun ryukzak", "Laptop backpack", "Рюкзак для ноутбука"] },
+    { id: 'powerbank', cat: 'tech', icon: 'fa-battery-full', price: 1300, n: ["Power bank", "Power bank", "Пауэрбанк"], d: ["10 000 mAh", "10,000 mAh", "10 000 мА·ч"] },
+    { id: 'book-python', cat: 'books', icon: 'fa-book-open', price: 1300, n: ["Kitob: Python Crash Course", "Book: Python Crash Course", "Книга: Python Crash Course"], d: ["Erik Mettiz, Python bo'yicha amaliy kurs", "Eric Matthes, a hands-on Python course", "Эрик Мэтиз, практический курс Python"] },
+    { id: 'book-cleancode', cat: 'books', icon: 'fa-book-open', price: 1400, n: ["Kitob: Clean Code", "Book: Clean Code", "Книга: «Чистый код»"], d: ["Robert Martin", "Robert Martin", "Роберт Мартин"] },
+    { id: 'pro-month', cat: 'gifts', icon: 'fa-crown', price: 1500, n: ["1 oylik PRO obuna", "1-month PRO plan", "PRO-подписка на 1 месяц"], d: ["Barcha kurslarga kirish", "Access to all courses", "Доступ ко всем курсам"] },
+    { id: 'keyboard', cat: 'tech', icon: 'fa-keyboard', price: 1600, n: ["Klaviatura", "Keyboard", "Клавиатура"], d: ["Mexanik klaviatura", "Mechanical keyboard", "Механическая клавиатура"] },
+    { id: 'earbuds', cat: 'tech', icon: 'fa-headphones', price: 1800, n: ["Simsiz quloqchin", "Wireless earbuds", "Беспроводные наушники"], d: ["Bluetooth quloqchin", "Bluetooth earbuds", "Bluetooth-наушники"] },
+    { id: 'speaker', cat: 'tech', icon: 'fa-volume-high', price: 2000, n: ["Bluetooth kolonka", "Bluetooth speaker", "Bluetooth-колонка"], d: ["Ko'chma kolonka", "Portable speaker", "Портативная колонка"] },
+    { id: 'watch', cat: 'tech', icon: 'fa-clock', price: 2500, n: ["Smart soat", "Smartwatch", "Смарт-часы"], d: ["Qadam va yurak urishini o'lchaydi", "Tracks steps and heart rate", "Шаги и пульс"] },
+    { id: 'tablet', cat: 'tech', icon: 'fa-tablet-screen-button', price: 8000, n: ["Planshet", "Tablet", "Планшет"], d: ["10 dyuymli planshet", "10-inch tablet", "Планшет 10 дюймов"] }
+];
+const SHOP_TILE = {
+    tech: 'from-sky-500 to-indigo-600',
+    books: 'from-amber-400 to-orange-600',
+    gifts: 'from-fuchsia-500 to-violet-600'
+};
+const shopLang = () => ({ uz: 0, en: 1, ru: 2 })[currentLang] ?? 0;
+const shopName = it => it.n[shopLang()];
+const shopDesc = it => it.d[shopLang()];
+let shopCat = 'all', myOrders = [], myOrdersKey = '', myOrdersUnsub = null, shopBusy = false;
+
+function ensureMyOrders() {
+    const key = currentUser && currentUser.email ? pointsKey(currentUser.email) : '';
+    if (key === myOrdersKey) return;
+    if (myOrdersUnsub) { myOrdersUnsub(); myOrdersUnsub = null; }
+    myOrdersKey = key; myOrders = [];
+    if (!key || !cloudDb) return;
+    myOrdersUnsub = cloudDb.collection('shopOrders').where('key', '==', key).onSnapshot(s => {
+        if (myOrdersKey !== key) return;
+        myOrders = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        if (currentView === 'shop') { renderShopBody(); if (window.applyI18nAll) window.applyI18nAll(); }
+    }, err => console.warn('Edu-Shop buyurtmalari:', err.message));
+}
+const shopReserved = () => myOrders.filter(o => o.status === 'pending').reduce((s, o) => s + (+o.price || 0), 0);
+const shopAvailable = () => Math.max(0, myPoints.balance - shopReserved());
+
+function renderShop(container) {
+    ensureMyOrders();
+    container.innerHTML = `<div class="py-8 space-y-8" id="shop-root"></div>`;
+    renderShopBody();
+}
+function renderShopBody() {
+    const root = document.getElementById('shop-root'); if (!root) return;
+    const ready = currentUser && myPoints.state === 'ok';
+    const av = ready ? shopAvailable() : 0, res = ready ? shopReserved() : 0;
+    const balBox = !currentUser
+        ? `<button onclick="openAuthModal()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl"><i class="fa-solid fa-right-to-bracket mr-2"></i><span>Ballarni ko'rish uchun kiring</span></button>`
+        : `<div class="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-3 shadow-sm">
+                <i class="fa-solid fa-coins text-2xl text-amber-500"></i>
+                <div><div class="text-2xl font-black text-gray-900 dark:text-white leading-none">${ready ? av : '…'}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"><span>ishlatish mumkin</span>${res ? ` · <span>${res}</span> <span>band qilingan</span>` : ''}</div></div>
+            </div>`;
+    const tabs = [['all', 'Hammasi'], ['tech', 'Texnika'], ['books', 'Kitoblar'], ['gifts', "Sovg'alar"]].map(([k, l]) =>
+        `<button onclick="shopSetCat('${k}')" aria-pressed="${shopCat === k}" class="px-4 py-2 rounded-xl text-sm font-semibold transition ${shopCat === k ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-gray-400'}">${l}</button>`).join('');
+    const items = SHOP_ITEMS.filter(it => shopCat === 'all' || it.cat === shopCat);
+    const cards = items.map(it => {
+        let btn;
+        if (!currentUser) btn = `<button onclick="openAuthModal()" class="w-full py-2 rounded-xl text-sm font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Kirish</button>`;
+        else if (!ready) btn = `<button disabled class="w-full py-2 rounded-xl text-sm font-bold bg-gray-100 dark:bg-gray-700 text-gray-400">…</button>`;
+        else if (av >= it.price) btn = `<button onclick="shopOpen('${it.id}')" class="w-full py-2 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white">Almashtirish</button>`;
+        else btn = `<button disabled class="w-full py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400"><span>Yana</span> <span>${it.price - av}</span> <span>ball kerak</span></button>`;
+        return `<article class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm overflow-hidden flex flex-col">
+            <div class="h-36 bg-gradient-to-br ${SHOP_TILE[it.cat]} flex items-center justify-center"><i class="fa-solid ${it.icon} text-5xl text-white/95 drop-shadow"></i></div>
+            <div class="p-4 flex flex-col gap-1 flex-1">
+                <h3 translate="no" class="font-bold text-gray-900 dark:text-white leading-snug">${escapeHtml(shopName(it))}</h3>
+                <p translate="no" class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(shopDesc(it))}</p>
+                <div class="mt-auto pt-3 flex items-center gap-1.5 font-extrabold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-coins"></i><span>${it.price.toLocaleString()}</span> <span class="font-semibold">ball</span></div>
+                <div class="pt-2">${btn}</div>
+            </div></article>`;
+    }).join('');
+    const ST = { pending: ['Kutilmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'], approved: ['Topshirildi', 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'], rejected: ['Rad etildi', 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'] };
+    const two = n => String(n).padStart(2, '0');
+    const dt = iso => { const d = new Date(iso); return isNaN(d) ? '' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(); };
+    const orders = !currentUser ? '' : `<section>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-3"><i class="fa-solid fa-box text-blue-600"></i> <span>Mening buyurtmalarim</span></h2>
+        ${myOrders.length ? `<ul class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">${myOrders.map(o => {
+            const it = SHOP_ITEMS.find(x => x.id === o.itemId), s = ST[o.status] || ST.pending;
+            return `<li class="px-4 py-3 flex flex-wrap items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-gradient-to-br ${SHOP_TILE[(it && it.cat) || 'gifts']} flex items-center justify-center shrink-0"><i class="fa-solid ${(it && it.icon) || 'fa-gift'} text-white"></i></span>
+                <div class="flex-1 min-w-[10rem]"><div translate="no" class="font-semibold text-gray-900 dark:text-white">${escapeHtml(it ? shopName(it) : o.itemName || '')}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">${dt(o.createdAt)} · <span>${(+o.price || 0).toLocaleString()}</span> <span>ball</span></div>
+                    ${o.status === 'rejected' && o.reason ? `<div class="text-xs text-red-600 dark:text-red-400 mt-0.5"><span>Sabab:</span> <span translate="no">${escapeHtml(o.reason)}</span></div>` : ''}</div>
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${s[1]}">${s[0]}</span></li>`;
+        }).join('')}</ul>` : `<p class="text-sm text-gray-500 dark:text-gray-400">Hali buyurtma yo'q. Ballaringizni yig'ib, yoqqan sovg'ani tanlang.</p>`}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Buyurtma admin tomonidan topshirilganda ball hisobingizdan yechiladi. Rad etilsa, ball qaytadi.</p>
+    </section>`;
+    root.innerHTML = `
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div><h1 class="text-3xl font-black text-gray-900 dark:text-white">Edu-Shop</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">Darsdagi faolligingiz uchun olgan ballaringizni sovg'alarga almashtiring.</p></div>
+            ${balBox}
+        </div>
+        <div class="flex flex-wrap items-center gap-2">${tabs}<span class="ml-auto text-sm text-gray-500 dark:text-gray-400"><span>${items.length}</span> <span>ta sovg'a</span></span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">${cards}</div>
+        ${orders}`;
+}
+function shopSetCat(k) { shopCat = k; renderShopBody(); if (window.applyI18nAll) window.applyI18nAll(); }
+
+function shopOpen(id) {
+    const it = SHOP_ITEMS.find(x => x.id === id); if (!it || !currentUser) return;
+    shopClose();
+    const av = shopAvailable();
+    document.body.insertAdjacentHTML('beforeend', `
+    <div id="shop-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onmousedown="if(event.target===this)shopClose()">
+        <form novalidate onsubmit="shopBuy(event,'${it.id}')" role="dialog" aria-modal="true" aria-labelledby="shop-title"
+            class="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-700">
+            <div class="h-28 bg-gradient-to-br ${SHOP_TILE[it.cat]} flex items-center justify-center"><i class="fa-solid ${it.icon} text-5xl text-white"></i></div>
+            <div class="p-6">
+                <h2 id="shop-title" translate="no" class="text-xl font-bold text-gray-900 dark:text-white">${escapeHtml(shopName(it))}</h2>
+                <p translate="no" class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(shopDesc(it))}</p>
+                <dl class="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-4 space-y-1.5 text-sm">
+                    <div class="flex justify-between"><dt class="text-gray-500 dark:text-gray-400">Narxi</dt><dd class="font-bold text-amber-600 dark:text-amber-400"><span>${it.price.toLocaleString()}</span> <span>ball</span></dd></div>
+                    <div class="flex justify-between"><dt class="text-gray-500 dark:text-gray-400">Sizda</dt><dd class="font-semibold text-gray-900 dark:text-white"><span>${av.toLocaleString()}</span> <span>ball</span></dd></div>
+                    <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1.5"><dt class="text-gray-500 dark:text-gray-400">Qoladi</dt><dd class="font-semibold text-gray-900 dark:text-white"><span>${(av - it.price).toLocaleString()}</span> <span>ball</span></dd></div>
+                </dl>
+                <label for="shop-note" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mt-4">Izoh (ixtiyoriy)</label>
+                <input id="shop-note" maxlength="120" autocomplete="off" placeholder="Masalan: o'lcham M, qora rang"
+                    class="mt-1 w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-white">
+                <p id="shop-err" class="text-sm text-red-600 dark:text-red-400 min-h-[1.25rem] mt-2" role="alert"></p>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="shopClose()" class="px-4 py-2.5 rounded-xl font-semibold text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Bekor qilish</button>
+                    <button id="shop-go" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white">Almashtirish</button>
+                </div>
+            </div>
+        </form>
+    </div>`);
+    if (window.applyI18nAll) window.applyI18nAll();
+    document.addEventListener('keydown', shopKey);
+    const go = document.getElementById('shop-go'); if (go) go.focus();
+}
+function shopKey(e) { if (e.key === 'Escape') shopClose(); }
+function shopClose() {
+    document.removeEventListener('keydown', shopKey);
+    const m = document.getElementById('shop-modal'); if (m) m.remove();
+}
+async function shopBuy(e, id) {
+    e.preventDefault();
+    const it = SHOP_ITEMS.find(x => x.id === id); if (!it || !currentUser || shopBusy) return;
+    const err = document.getElementById('shop-err'), go = document.getElementById('shop-go');
+    if (!cloudDb) { err.textContent = "Internet aloqasi yo'q."; return; }
+    if (shopAvailable() < it.price) { err.textContent = "Ball yetarli emas."; return; }
+    shopBusy = true; go.disabled = true; go.classList.add('opacity-60');
+    try {
+        await cloudDb.collection('shopOrders').add({
+            key: pointsKey(currentUser.email), email: currentUser.email.trim(), name: currentUser.name || '',
+            itemId: it.id, itemName: it.n[0], price: it.price,
+            note: (document.getElementById('shop-note').value || '').trim().slice(0, 120),
+            status: 'pending', createdAt: new Date().toISOString()
+        });
+        shopClose();
+        shopToast("Buyurtma yuborildi. Admin topshirganda ball yechiladi.");
+    } catch (x) {
+        console.warn('Edu-Shop:', x && x.message);
+        err.textContent = x && x.code === 'permission-denied' ? "Ruxsat yo'q: Firestore Rules'ni yangilang." : "Buyurtma yuborilmadi. Qayta urinib ko'ring.";
+        go.disabled = false; go.classList.remove('opacity-60');
+    }
+    shopBusy = false;
+}
+function shopToast(msg) {
+    let t = document.getElementById('shop-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'shop-toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl bg-green-600 text-white text-sm font-semibold shadow-lg';
+    t.textContent = msg;
+    if (window.applyI18nAll) window.applyI18nAll();
+    clearTimeout(t._h); t._h = setTimeout(() => t.remove(), 4000);
 }
 let cloudState = 'off'; // off | connecting | on | error
 
@@ -1728,6 +1914,8 @@ function updateHeaderAuthUI() {
         }
     }
     ensureMyPoints();
+    ensureMyOrders();
+    if (currentView === 'shop') renderShopBody();
 }
 
 // NAVIGATION CONTROLLER
@@ -1747,6 +1935,7 @@ function renderView(view, param = null) {
     else if (view === 'tasks') renderTasks(content);
     else if (view === 'contact') renderContact(content);
     else if (view === 'payment') renderPaymentPage(content);
+    else if (view === 'shop') renderShop(content);
 
 }
 
@@ -1782,7 +1971,7 @@ window.pageTitle = function (l) {
         return c ? c.title + ' - EduFlow' : null;
     }
     if (PAGE_VIEW === 'payment') return (payText[l] || payText.uz).resultTitle + ' - EduFlow';
-    const map = { catalog: t.navCatalog, pricing: t.navPricing, tasks: t.navTasks, contact: t.navContact };
+    const map = { catalog: t.navCatalog, pricing: t.navPricing, tasks: t.navTasks, contact: t.navContact, shop: 'Edu-Shop' };
     return map[PAGE_VIEW] ? map[PAGE_VIEW] + ' - EduFlow' : null;
 };
 
@@ -3597,6 +3786,36 @@ function handleEditNameSubmit(e) {
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Ballarni ko'rish uchun kiring", "Log in to see your points", "Войдите, чтобы увидеть баллы"],
+        ["ishlatish mumkin", "available", "доступно"],
+        ["band qilingan", "reserved", "зарезервировано"],
+        ["Hammasi", "All", "Все"],
+        ["Texnika", "Tech", "Техника"],
+        ["Kitoblar", "Books", "Книги"],
+        ["Sovg'alar", "Gifts", "Подарки"],
+        ["Almashtirish", "Redeem", "Обменять"],
+        ["Yana", "Need", "Нужно ещё"],
+        ["ball kerak", "more points", "баллов"],
+        ["ball", "points", "баллов"],
+        ["ta sovg'a", "gifts", "подарков"],
+        ["Mening buyurtmalarim", "My orders", "Мои заказы"],
+        ["Topshirildi", "Delivered", "Выдано"],
+        ["Rad etildi", "Rejected", "Отклонено"],
+        ["Sabab:", "Reason:", "Причина:"],
+        ["Hali buyurtma yo'q. Ballaringizni yig'ib, yoqqan sovg'ani tanlang.", "No orders yet. Collect points and pick a gift you like.", "Заказов пока нет. Копите баллы и выбирайте подарок."],
+        ["Buyurtma admin tomonidan topshirilganda ball hisobingizdan yechiladi. Rad etilsa, ball qaytadi.", "Points are deducted when the admin delivers your order. If it's rejected, the points come back.", "Баллы списываются, когда администратор выдаёт заказ. Если заказ отклонён, баллы возвращаются."],
+        ["Darsdagi faolligingiz uchun olgan ballaringizni sovg'alarga almashtiring.", "Exchange the points you earn for being active in class for gifts.", "Обменивайте баллы за активность на уроках на подарки."],
+        ["Narxi", "Price", "Цена"],
+        ["Sizda", "You have", "У вас"],
+        ["Qoladi", "Left after", "Останется"],
+        ["Izoh (ixtiyoriy)", "Comment (optional)", "Комментарий (необязательно)"],
+        ["Masalan: o'lcham M, qora rang", "For example: size M, black", "Например: размер M, чёрный"],
+        ["Bekor qilish", "Cancel", "Отмена"],
+        ["Ball yetarli emas.", "Not enough points.", "Недостаточно баллов."],
+        ["Internet aloqasi yo'q.", "No internet connection.", "Нет подключения к интернету."],
+        ["Buyurtma yuborildi. Admin topshirganda ball yechiladi.", "Order sent. Points are deducted when the admin delivers it.", "Заказ отправлен. Баллы спишутся, когда администратор выдаст его."],
+        ["Ruxsat yo'q: Firestore Rules'ni yangilang.", "Access denied: update Firestore Rules.", "Нет доступа: обновите Firestore Rules."],
+        ["Buyurtma yuborilmadi. Qayta urinib ko'ring.", "Order wasn't sent. Please try again.", "Заказ не отправлен. Попробуйте ещё раз."],
         ["Ustoz kursi", "Teacher course", "Курс преподавателя"],
         ["Bepul", "Free", "Бесплатно"],
         ["Sotib olingan", "Purchased", "Куплено"],
