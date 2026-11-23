@@ -1076,7 +1076,7 @@ function ensureMyPoints() {
         myPoints.balance = d.exists ? (+d.data().balance || 0) : 0;
         cloudDb.collection('pointLog').where('key', '==', key).get().then(s => {
             if (myPoints.key !== key) return;
-            myPoints.log = s.docs.map(x => x.data()).sort((x, y) => (y.createdAt || '').localeCompare(x.createdAt || '')).slice(0, 20);
+            myPoints.log = s.docs.map(x => x.data()).sort((x, y) => (y.createdAt || '').localeCompare(x.createdAt || '')).slice(0, 100);
             myPoints.state = 'ok'; refreshMyPointsUI();
         }).catch(err => { console.warn('Ball tarixi:', err.message); if (myPoints.key === key) { myPoints.state = 'ok'; refreshMyPointsUI(); } });
     }, err => { console.warn('Ballar:', err.message); if (myPoints.key === key) { myPoints.state = 'error'; refreshMyPointsUI(); } });
@@ -1086,26 +1086,39 @@ function refreshMyPointsUI() {
     if (h) { h.classList.toggle('hidden', myPoints.state !== 'ok'); const n = h.querySelector('.n'); if (n) n.textContent = myPoints.balance; }
     const b = document.getElementById('my-points-body');
     if (b) b.innerHTML = myPointsBodyHtml();
+    const hh = document.getElementById('my-points-history');
+    if (hh) hh.innerHTML = myPointsHistoryHtml();
+    if ((b || hh) && window.applyI18nAll) window.applyI18nAll();
 }
-function myPointsBodyHtml() {
+function myPointsStatusHtml() {
     const s = myPoints.state, muted = 'text-sm text-gray-500 dark:text-gray-400';
     if (s === 'off') return `<p class="${muted}">Ballarni ko'rish uchun internet aloqasi kerak.</p>`;
     if (s === 'loading') return `<p class="${muted}">Yuklanmoqda...</p>`;
     if (s === 'error') return `<p class="text-sm text-red-600 dark:text-red-400">Ballarni yuklab bo'lmadi.</p>`;
-    const two = n => String(n).padStart(2, '0');
-    const dt = iso => { const d = new Date(iso); return isNaN(d) ? '' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(); };
-    const list = myPoints.log.length
-        ? `<h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ball tarixi</h4><ul class="divide-y divide-gray-100 dark:divide-gray-700">${myPoints.log.map(l => `
-            <li class="py-2.5 flex items-center gap-3">
-                <span class="font-bold w-14 shrink-0 ${l.delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${l.delta > 0 ? '+' : ''}${l.delta}</span>
-                <div class="flex-1 min-w-0" translate="no"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}</div></div>
-                <span class="text-xs text-gray-400 shrink-0">${dt(l.createdAt)}</span>
-            </li>`).join('')}</ul>`
-        : `<p class="${muted}">Hali ball yo'q. Ustozingiz darsdagi faolligingiz uchun ball beradi.</p>`;
-    return `<div class="flex items-center gap-4 mb-5">
+    return '';
+}
+// Profil tepasida: joriy ball
+function myPointsBodyHtml() {
+    const st = myPointsStatusHtml(); if (st) return st;
+    const n = myPoints.log.length;
+    return `<div class="flex items-center gap-4">
             <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0"><i class="fa-solid fa-coins text-3xl text-amber-500"></i></div>
-            <div><div class="text-4xl font-black text-gray-900 dark:text-white">${myPoints.balance}</div><div class="${muted}">Joriy ball</div></div>
-        </div>${list}`;
+            <div class="flex-1"><div class="text-4xl font-black text-gray-900 dark:text-white">${myPoints.balance}</div><div class="text-sm text-gray-500 dark:text-gray-400">Joriy ball</div></div>
+            ${n ? `<a href="#my-points-history-title" onclick="event.preventDefault();document.getElementById('my-points-history-title').scrollIntoView({behavior:'smooth'})" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"><span>Ball tarixi</span> <i class="fa-solid fa-arrow-down"></i></a>` : ''}
+        </div>`;
+}
+// Profil pastida: ball tarixi
+function myPointsHistoryHtml() {
+    const st = myPointsStatusHtml(); if (st) return st;
+    if (!myPoints.log.length) return `<p class="text-sm text-gray-500 dark:text-gray-400">Hali ball yo'q. Ustozingiz darsdagi faolligingiz uchun ball beradi.</p>`;
+    const two = n => String(n).padStart(2, '0');
+    const dt = iso => { const d = new Date(iso); return isNaN(d) ? '' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + two(d.getHours()) + ':' + two(d.getMinutes()); };
+    return `<ul class="divide-y divide-gray-100 dark:divide-gray-700">${myPoints.log.map(l => `
+            <li class="py-3 flex items-center gap-3">
+                <span class="font-black text-lg w-16 shrink-0 ${l.delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">${l.delta > 0 ? '+' : ''}${l.delta}</span>
+                <div class="flex-1 min-w-0" translate="no"><div class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">${escapeHtml(l.reason || l.groupName || '-')}</div><div class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(l.teacherName || '')}${l.groupName && l.reason ? ' · ' + escapeHtml(l.groupName) : ''}</div></div>
+                <span class="text-xs text-gray-400 shrink-0 text-right">${dt(l.createdAt)}</span>
+            </li>`).join('')}</ul>`;
 }
 let cloudState = 'off'; // off | connecting | on | error
 
@@ -2644,6 +2657,11 @@ function renderProfile(container) {
             ? bookmarkedCourses.map(c => renderCourseCard(c)).join('')
             : '<div class="col-span-full py-8 text-center text-gray-400 text-sm">Hozircha saqlangan kurslar mavjud emas.</div>'}
                         </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h3 id="my-points-history-title" class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-2 scroll-mt-24"><i class="fa-solid fa-clock-rotate-left text-amber-500"></i> <span>Ball tarixi</span></h3>
+                        <div id="my-points-history">${myPointsHistoryHtml()}</div>
                     </div>
                 </div>
             `;
