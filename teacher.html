@@ -249,6 +249,9 @@
 .tinp { width: 100%; border: 1px solid #d5d8e8; border-radius: .6rem; padding: .6rem .8rem; background: #fff; font-size: .9rem; }
 .tinp:focus { outline: 2px solid #22d3ee; border-color: transparent; }
 .dark .tinp { background: #1f2937; color: #f3f4f6; border-color: #374151; }
+/* Brauzer avto-to'ldirganda maydon oq-ko'k bo'lib qolmasin */
+.tinp:-webkit-autofill, .tinp:-webkit-autofill:hover, .tinp:-webkit-autofill:focus { -webkit-text-fill-color: #1e293b; box-shadow: 0 0 0 1000px #fff inset; caret-color: #1e293b; transition: background-color 9999s; }
+.dark .tinp:-webkit-autofill, .dark .tinp:-webkit-autofill:hover, .dark .tinp:-webkit-autofill:focus { -webkit-text-fill-color: #f3f4f6; box-shadow: 0 0 0 1000px #1f2937 inset; caret-color: #f3f4f6; }
 .tbtn { border-radius: .6rem; padding: .55rem 1rem; font-weight: 700; font-size: .875rem; transition: filter .2s; }
 .tbtn:hover { filter: brightness(1.08); }
 .tbp { background: #6c5ce7; color: #fff; }
@@ -396,7 +399,7 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
                 if (mode === 'register') {
                     pendingName = $('#a-name').value.trim();
                     if (!pendingName) throw { message: 'Ism va familiyangizni kiriting.' };
-                    if (!sent || sent.email !== em.toLowerCase() || Date.now() > sent.exp || $('#a-code').value.replace(/\D/g, '') !== sent.code) throw { message: "Emailga kelgan kodni to'g'ri kiriting." };
+                    if (!sent || sent.email !== em.toLowerCase() || Date.now() > sent.exp || !sent.codes.includes($('#a-code').value.replace(/\D/g, ''))) throw { message: "Emailga kelgan kodni to'g'ri kiriting." };
                     await auth.createUserWithEmailAndPassword(em, pw);
                 } else await auth.signInWithEmailAndPassword(em, pw);
             } catch (x) { $('#a-err').textContent = ERR[x.code] || x.message; }
@@ -690,7 +693,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
             const st = await deliverAuthCode(em, $('#a-name').value.trim(), code);
             if (st === 'failed') { $('#a-err').textContent = "Kod yuborilmadi. Birozdan so'ng qayta urinib ko'ring."; return; }
-            sent = { email: em.toLowerCase(), code, exp: Date.now() + 600000 };
+            const same = sent && sent.email === em.toLowerCase() && Date.now() < sent.exp;
+            sent = { email: em.toLowerCase(), codes: [code, ...(same ? sent.codes : [])].slice(0, 3), exp: Date.now() + 600000 };
             $('#a-err').textContent = '';
             $('#a-code-hint').textContent = st === 'sent' ? `Kod ${em} manziliga yuborildi. 10 daqiqa amal qiladi.` : `Test rejimi: email xizmati ulanmagan. Kod: ${code}`;
         }
