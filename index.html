@@ -289,11 +289,11 @@
 
     <!-- NAVIGATION BAR -->
     <header class="sticky top-0 z-40 glass border-b border-gray-200 dark:border-gray-800 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
 
             <!-- Logo -->
             <a href="#/"
-                class="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400 hover:opacity-80 transition shrink-0 mr-6 lg:mr-14">
+                class="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400 hover:opacity-80 transition shrink-0">
                 <span
                     class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-white text-base shadow-lg"><i
                         class="fa-solid fa-graduation-cap"></i></span>
@@ -301,7 +301,7 @@
             </a>
 
             <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-4 lg:gap-6 font-medium text-sm [&>a]:whitespace-nowrap">
+            <nav class="hidden xl:flex items-center gap-6 font-medium text-sm [&>a]:whitespace-nowrap mr-auto ml-8">
                 <a href="#/catalog" class="hover:text-blue-600 dark:hover:text-blue-400 transition"
                     id="nav-catalog">Kurslar Katalogi</a>
                 <a href="#/pricing"
@@ -318,38 +318,31 @@
             </nav>
 
             <!-- Actions Right -->
-            <div class="flex items-center gap-3">
-                <!-- Premium Upgrade Page Button -->
-                <a href="#/pricing" id="premium-header-btn"
-                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 rounded-lg font-bold text-xs shadow-md hover:opacity-90 transition cursor-pointer">
-                    <i class="fa-solid fa-crown text-amber-950"></i>
-                    <span id="premium-btn-text">PRO Obuna (30k/oy)</span>
-                </a>
-
+            <div class="flex items-center gap-2 shrink-0">
                 <!-- Language Selector -->
-                <select id="lang-select" onchange="changeLanguage(this.value)"
-                    class="bg-gray-100 dark:bg-gray-800 border-none text-xs font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-200">
+                <select id="lang-select" onchange="changeLanguage(this.value)" aria-label="Til / Language"
+                    class="hidden sm:block bg-gray-100 dark:bg-gray-800 border-none text-xs font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-200">
                     <option value="uz">O'zbek</option>
                     <option value="en">English</option>
                     <option value="ru">Русский</option>
                 </select>
 
                 <!-- Dark Mode Toggle -->
-                <button onclick="toggleDarkMode()"
-                    class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <button onclick="toggleDarkMode()" aria-label="Qorong'i rejim"
+                    class="hidden sm:block p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                     <i id="theme-icon" class="fa-solid fa-moon text-gray-600 dark:text-yellow-400"></i>
                 </button>
 
                 <!-- Bookmarks -->
-                <a href="#/profile"
-                    class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <a href="#/profile" aria-label="Saqlangan kurslar"
+                    class="hidden sm:block relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                     <i class="fa-solid fa-bookmark text-gray-600 dark:text-gray-300"></i>
                     <span id="bookmark-count"
                         class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
 
                 <!-- Cart Button -->
-                <button onclick="openCartModal()"
+                <button onclick="openCartModal()" aria-label="Savatcha"
                     class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                     <i class="fa-solid fa-cart-shopping text-gray-600 dark:text-gray-300"></i>
                     <span id="cart-count"
@@ -358,8 +351,30 @@
 
                 <!-- Auth Buttons / User Profile Badge -->
                 <div id="auth-buttons-container"></div>
+
+                <!-- Mobil menyu tugmasi -->
+                <button id="mnav-btn" onclick="toggleMobileNav()" aria-label="Menyu" aria-expanded="false" aria-controls="mobile-nav"
+                    class="xl:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <i class="fa-solid fa-bars text-gray-700 dark:text-gray-200"></i>
+                </button>
             </div>
         </div>
+
+        <!-- Mobil menyu -->
+        <nav id="mobile-nav" class="hidden xl:hidden border-t border-gray-200 dark:border-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 grid gap-1 text-sm font-medium [&>a]:px-3 [&>a]:py-2.5 [&>a]:rounded-lg">
+                <a href="#/catalog" onclick="closeMobileNav()" class="hover:bg-gray-100 dark:hover:bg-gray-800" id="m-nav-catalog">Kurslar Katalogi</a>
+                <a href="#/pricing" onclick="closeMobileNav()" class="hover:bg-gray-100 dark:hover:bg-gray-800 font-bold flex items-center gap-2"><i class="fa-solid fa-crown text-amber-500"></i> <span id="m-nav-pricing">PRO Tariflar</span></a>
+                <a href="#/tasks" onclick="closeMobileNav()" class="hover:bg-gray-100 dark:hover:bg-gray-800" id="m-nav-tasks">Topshiriqlar</a>
+                <a href="#/shop" onclick="closeMobileNav()" class="hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"><i class="fa-solid fa-gift text-pink-500"></i> Edu-Shop</a>
+                <a href="#/contact" onclick="closeMobileNav()" class="hover:bg-gray-100 dark:hover:bg-gray-800" id="m-nav-contact">Aloqa</a>
+                <a href="#/profile" onclick="closeMobileNav()" class="sm:hidden hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"><i class="fa-solid fa-bookmark text-gray-500"></i> <span>Saqlangan kurslar</span></a>
+                <button type="button" onclick="toggleDarkMode()" class="sm:hidden text-left px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"><i class="fa-solid fa-circle-half-stroke text-gray-500"></i> <span>Qorong'i / yorug' rejim</span></button>
+                <div class="sm:hidden px-3 pt-2"><select id="m-lang-select" onchange="changeLanguage(this.value)" aria-label="Til / Language"
+                    class="w-full bg-gray-100 dark:bg-gray-800 border-none text-sm font-semibold rounded-lg px-3 py-2 text-gray-800 dark:text-gray-200">
+                    <option value="uz">O'zbek</option><option value="en">English</option><option value="ru">Русский</option></select></div>
+            </div>
+        </nav>
     </header>`;
     const BOTTOM = `    <footer class="bg-gray-900 text-gray-400 border-t border-gray-800 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -1859,12 +1874,24 @@ function changeLanguage(lang) {
     navigateTo(currentView, selectedCourseId);
 }
 
+function toggleMobileNav(force) {
+    const n = document.getElementById('mobile-nav'), b = document.getElementById('mnav-btn');
+    if (!n) return;
+    const open = typeof force === 'boolean' ? force : n.classList.contains('hidden');
+    n.classList.toggle('hidden', !open);
+    if (b) { b.setAttribute('aria-expanded', open); b.querySelector('i').className = 'fa-solid ' + (open ? 'fa-xmark' : 'fa-bars') + ' text-gray-700 dark:text-gray-200'; }
+}
+function closeMobileNav() { toggleMobileNav(false); }
+window.addEventListener('hashchange', closeMobileNav);
+
 function updateStaticText() {
     const t = i18n[currentLang];
     document.getElementById('nav-catalog').innerText = t.navCatalog;
     document.getElementById('nav-pricing-text').innerText = t.navPricing;
     document.getElementById('nav-tasks').innerText = t.navTasks;
     document.getElementById('nav-contact').innerText = t.navContact;
+    [['m-nav-catalog', t.navCatalog], ['m-nav-pricing', t.navPricing], ['m-nav-tasks', t.navTasks], ['m-nav-contact', t.navContact]].forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.innerText = v; });
+    const ml = document.getElementById('m-lang-select'); if (ml) ml.value = currentLang;
 
     document.getElementById('footer-desc').innerText = t.footerDesc;
     document.getElementById('footer-nav-title').innerText = t.footerNav;
@@ -1885,12 +1912,12 @@ function updateHeaderAuthUI() {
     const t = i18n[currentLang];
 
     if (currentUser) {
-        const isPro = currentUser.isPro ? `<span class="bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 font-black text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5"><i class="fa-solid fa-crown"></i> PRO</span>` : '';
+        const isPro = currentUser.isPro ? `<span class="bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 font-black text-[10px] px-1.5 py-0.5 rounded hidden sm:flex items-center gap-0.5"><i class="fa-solid fa-crown"></i> PRO</span>` : '';
 
         container.innerHTML = `
-                    <button onclick="navigateTo('profile')" class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                        <img src="${currentUser.avatar || 'https://picsum.photos/seed/user/100/100'}" class="w-6 h-6 rounded-full border border-blue-500">
-                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">${currentUser.name}</span>
+                    <button onclick="navigateTo('profile')" title="${escapeHtml(currentUser.name || '')}" class="flex items-center gap-2 whitespace-nowrap bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <img src="${currentUser.avatar || 'https://picsum.photos/seed/user/100/100'}" alt="" class="w-6 h-6 rounded-full border border-blue-500 object-cover shrink-0">
+                        <span translate="no" class="hidden md:block max-w-[8rem] truncate text-sm font-semibold text-gray-800 dark:text-gray-200">${escapeHtml(currentUser.name || '')}</span>
                                                 ${isPro}
                         <span id="header-points" class="${myPoints.state === 'ok' ? '' : 'hidden '}flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400" title="Ballar"><i class="fa-solid fa-coins"></i><span class="n">${myPoints.balance}</span></span>
                     </button>
@@ -1900,11 +1927,11 @@ function updateHeaderAuthUI() {
         }
     } else {
         container.innerHTML = `
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 whitespace-nowrap">
                         <button id="main-login-btn" onclick="openAuthModal()" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm whitespace-nowrap">
                             ${t.loginBtn}
                         </button>
-                        <button id="main-register-btn" onclick="openAuthModal('register')" class="px-4 py-1.5 rounded-lg text-sm font-medium border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition whitespace-nowrap">
+                        <button id="main-register-btn" onclick="openAuthModal('register')" class="hidden sm:inline-block px-4 py-1.5 rounded-lg text-sm font-medium border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition whitespace-nowrap">
                             ${t.registerBtn}
                         </button>
                     </div>
@@ -3786,6 +3813,9 @@ function handleEditNameSubmit(e) {
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Qorong'i / yorug' rejim", "Dark / light mode", "Тёмная / светлая тема"],
+        ["Saqlangan kurslar", "Saved courses", "Сохранённые курсы"],
+        ["Menyu", "Menu", "Меню"],
         ["Ballarni ko'rish uchun kiring", "Log in to see your points", "Войдите, чтобы увидеть баллы"],
         ["ishlatish mumkin", "available", "доступно"],
         ["band qilingan", "reserved", "зарезервировано"],
