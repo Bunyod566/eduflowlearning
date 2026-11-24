@@ -1101,7 +1101,12 @@ function ensureMyPoints() {
 }
 function refreshMyPointsUI() {
     const h = document.getElementById('header-points');
-    if (h) { h.classList.toggle('hidden', myPoints.state !== 'ok'); const n = h.querySelector('.n'); if (n) n.textContent = myPoints.balance; }
+    if (h) {
+        h.classList.toggle('hidden', myPoints.state !== 'ok');
+        const n = h.querySelector('.n'); if (n) n.textContent = shopAvailable();
+        const res = shopReserved();
+        h.title = res ? `${myPoints.balance} ball, ${res} band qilingan (Edu-Shop)` : 'Ballar';
+    }
     const b = document.getElementById('my-points-body');
     if (b) b.innerHTML = myPointsBodyHtml();
     const hh = document.getElementById('my-points-history');
@@ -1122,7 +1127,7 @@ function myPointsBodyHtml() {
     const n = myPoints.log.length;
     return `<div class="flex items-center gap-4">
             <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0"><i class="fa-solid fa-coins text-3xl text-amber-500"></i></div>
-            <div class="flex-1"><div class="text-4xl font-black text-gray-900 dark:text-white">${myPoints.balance}</div><div class="text-sm text-gray-500 dark:text-gray-400">Joriy ball</div></div>
+            <div class="flex-1"><div class="text-4xl font-black text-gray-900 dark:text-white">${shopAvailable()}</div><div class="text-sm text-gray-500 dark:text-gray-400"><span>Joriy ball</span>${shopReserved() ? ` · <span>${shopReserved()}</span> <span>band qilingan</span> <a href="#/shop" class="text-blue-600 dark:text-blue-400 hover:underline">(Edu-Shop)</a>` : ''}</div></div>
             ${n ? `<a href="#my-points-history-title" onclick="event.preventDefault();document.getElementById('my-points-history-title').scrollIntoView({behavior:'smooth'})" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"><span>Ball tarixi</span> <i class="fa-solid fa-arrow-down"></i></a>` : ''}
         </div>`;
 }
@@ -1185,7 +1190,7 @@ function ensureMyOrders() {
     myOrdersUnsub = cloudDb.collection('shopOrders').where('key', '==', key).onSnapshot(s => {
         if (myOrdersKey !== key) return;
         myOrders = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-        if (currentView === 'shop') { renderShopBody(); if (window.applyI18nAll) window.applyI18nAll(); }
+        refreshMyPointsUI();
     }, err => console.warn('Edu-Shop buyurtmalari:', err.message));
 }
 const shopReserved = () => myOrders.filter(o => o.status === 'pending').reduce((s, o) => s + (+o.price || 0), 0);
@@ -1919,7 +1924,7 @@ function updateHeaderAuthUI() {
                         <img src="${currentUser.avatar || 'https://picsum.photos/seed/user/100/100'}" alt="" class="w-6 h-6 rounded-full border border-blue-500 object-cover shrink-0">
                         <span translate="no" class="hidden md:block max-w-[8rem] truncate text-sm font-semibold text-gray-800 dark:text-gray-200">${escapeHtml(currentUser.name || '')}</span>
                                                 ${isPro}
-                        <span id="header-points" class="${myPoints.state === 'ok' ? '' : 'hidden '}flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400" title="Ballar"><i class="fa-solid fa-coins"></i><span class="n">${myPoints.balance}</span></span>
+                        <span id="header-points" class="${myPoints.state === 'ok' ? '' : 'hidden '}flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400" title="Ballar"><i class="fa-solid fa-coins"></i><span class="n">${shopAvailable()}</span></span>
                     </button>
                 `;
         if (premiumBtn) {
