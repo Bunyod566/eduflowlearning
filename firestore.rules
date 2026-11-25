@@ -7,22 +7,16 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.firebase.sign_in_provider == 'password';
     }
-    // Bosh egasi (o'chirib bo'lmaydi)
-    function owner() {
+    // Menejer: bitta, o'chirib bo'lmaydi
+    function manager() {
       return pw() && request.auth.token.email == 'bunedniyazov2014@gmail.com';
     }
-    // Xodimlar ro'yxatidagi rol: staff/{email}.role = 'admin' yoki 'manager'
-    function staffRole() {
-      return exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
-        ? get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role : '';
-    }
-    // Menejer: bosh egasi yoki menejer rolidagi xodim
-    function manager() {
-      return owner() || (pw() && staffRole() == 'manager');
-    }
-    // Admin: bosh egasi, menejer yoki admin rolidagi xodim
+    // Admin: menejer yoki menejer qo'shgan admin (staff/{email}, role 'admin')
     function admin() {
-      return owner() || (pw() && staffRole() in ['admin', 'manager']);
+      return manager()
+        || (pw()
+          && exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
+          && get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role == 'admin');
     }
     // Admin tasdiqlagan ustoz
     function teacher() {
@@ -115,16 +109,13 @@ service cloud.firestore {
       allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
     }
 
-    // Xodimlar: bosh egasi menejer va admin tayinlaydi; menejer faqat admin qo'shadi va o'chiradi
+    // Adminlar ro'yxati: faqat menejer qo'shadi va o'chiradi
     match /staff/{email} {
       allow read: if pw() && (request.auth.token.email == email || admin());
-      allow create: if request.resource.data.email == email
-        && (owner() && request.resource.data.role in ['admin', 'manager']
-          || manager() && request.resource.data.role == 'admin');
-      allow update: if request.resource.data.email == email
-        && (owner() && request.resource.data.role in ['admin', 'manager']
-          || manager() && resource.data.role == 'admin' && request.resource.data.role == 'admin');
-      allow delete: if owner() || (manager() && resource.data.role == 'admin');
+      allow create, update: if manager()
+        && request.resource.data.email == email
+        && request.resource.data.role == 'admin';
+      allow delete: if manager();
     }
 
     // orders va txnIndex: faqat to'lov serveri kiradi, saytdan yopiq.

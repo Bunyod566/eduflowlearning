@@ -13,7 +13,7 @@ Sahifalar o'rtasida o'tish sahifani qayta yuklamaydi, manzillar `#` bilan boshla
 | `/payment.html?order=...` | To'lovdan qaytgandan keyingi natija (netlify.toml uni index.html ga yo'naltiradi) |
 
 Alohida qolgan fayllar:
-- `manager.html`: menejer paneli (o'quvchilar, ustozlar, xodimlar).
+- `manager.html`: menejer paneli (o'quvchilar, ustozlar, adminlar).
 - `teacher.html`: ustozlar sayti (`teacher.html#/teacher-courses`, `#/teacher-edit/ID`, `#/teacher-profile`). Ustozlar uni to'g'ridan-to'g'ri manzil orqali ochadi (asosiy saytda havola yo'q).
 - `admin.html`: admin panel (alohida sayt).
 - `netlify.toml`, `netlify/functions/`: to'lov serveri (Payme, Click, Uzum Bank). Sozlash: `PAYMENTS-SETUP.md`, kalitlar namunasi: `.env.example`.
@@ -40,11 +40,10 @@ O'quvchi o'z ballarini asosiy saytda ko'radi: sarlavhadagi tanga belgisi va Prof
 Firestore kolleksiyalari: `groups`, `points` (kaliti o'quvchi emaili), `pointLog`, `attendance`.
 
 ## Menejer paneli (manager.html)
-Rollar: **bosh egasi** (`bunedniyazov2014@gmail.com`, o'chirib bo'lmaydi) > **menejer** > **admin**. Xodimlar Firestore'dagi `staff` kolleksiyasida (hujjat nomi = email kichik harflarda).
-- **Menejer**: o'quvchilarga ball qo'shadi/ayiradi (izoh bilan, ball tarixida "Menejer" bo'lib ko'rinadi), o'quvchi va ustoz akkauntlarini o'chiradi va tiklaydi, adminlarni qo'shadi va o'chiradi.
-- **Bosh egasi**: menejer imkoniyatlari + menejerlarni tayinlaydi va o'chiradi.
+**Menejer bitta**: `bunedniyazov2014@gmail.com` (o'chirib bo'lmaydi). Adminlar Firestore'dagi `staff` kolleksiyasida (hujjat nomi = email kichik harflarda).
+- **Menejer**: o'quvchilarga ball qo'shadi/ayiradi (izoh bilan, ball tarixida "Menejer" bo'lib ko'rinadi), o'quvchi va ustoz akkauntlarini o'chiradi va tiklaydi, adminlarni qo'shadi va o'chiradi. Admin panelidagi hamma narsani ham qila oladi.
 - **Admin**: `admin.html` da ishlaydi (ustozlar, kurslar, sharhlar, Edu-Shop). Menejer panelini ocholmaydi.
-- Yangi xodim: menejer emailini "Xodimlar" ga qo'shadi, xodim `manager.html` dagi **Akkaunt yaratish** orqali shu email bilan parol o'rnatadi. Admin keyin `admin.html` dagi Firebase kirishida shu email va parol bilan kiradi.
+- Yangi admin: menejer emailini "Adminlar" ga qo'shadi, admin `manager.html` dagi **Akkaunt yaratish** orqali shu email bilan parol o'rnatadi, keyin `admin.html` dagi Firebase kirishida shu email va parol bilan kiradi.
 - O'chirish: o'quvchi saytga kira olmaydi (ballari saqlanadi); ustoz ustozlar saytida hech narsa qila olmaydi (kurslari saqlanadi). Ikkalasini ham tiklash mumkin. Firebase'dagi kirish akkauntining o'zi server talab qilgani uchun o'chirilmaydi, faqat huquqlari yopiladi.
 
 ## Edu-Shop
@@ -71,22 +70,16 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.firebase.sign_in_provider == 'password';
     }
-    // Bosh egasi (o'chirib bo'lmaydi)
-    function owner() {
+    // Menejer: bitta, o'chirib bo'lmaydi
+    function manager() {
       return pw() && request.auth.token.email == 'bunedniyazov2014@gmail.com';
     }
-    // Xodimlar ro'yxatidagi rol: staff/{email}.role = 'admin' yoki 'manager'
-    function staffRole() {
-      return exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
-        ? get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role : '';
-    }
-    // Menejer: bosh egasi yoki menejer rolidagi xodim
-    function manager() {
-      return owner() || (pw() && staffRole() == 'manager');
-    }
-    // Admin: bosh egasi, menejer yoki admin rolidagi xodim
+    // Admin: menejer yoki menejer qo'shgan admin (staff/{email}, role 'admin')
     function admin() {
-      return owner() || (pw() && staffRole() in ['admin', 'manager']);
+      return manager()
+        || (pw()
+          && exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
+          && get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role == 'admin');
     }
     // Admin tasdiqlagan ustoz
     function teacher() {
@@ -179,16 +172,13 @@ service cloud.firestore {
       allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
     }
 
-    // Xodimlar: bosh egasi menejer va admin tayinlaydi; menejer faqat admin qo'shadi va o'chiradi
+    // Adminlar ro'yxati: faqat menejer qo'shadi va o'chiradi
     match /staff/{email} {
       allow read: if pw() && (request.auth.token.email == email || admin());
-      allow create: if request.resource.data.email == email
-        && (owner() && request.resource.data.role in ['admin', 'manager']
-          || manager() && request.resource.data.role == 'admin');
-      allow update: if request.resource.data.email == email
-        && (owner() && request.resource.data.role in ['admin', 'manager']
-          || manager() && resource.data.role == 'admin' && request.resource.data.role == 'admin');
-      allow delete: if owner() || (manager() && resource.data.role == 'admin');
+      allow create, update: if manager()
+        && request.resource.data.email == email
+        && request.resource.data.role == 'admin';
+      allow delete: if manager();
     }
 
     // orders va txnIndex: faqat to'lov serveri kiradi, saytdan yopiq.

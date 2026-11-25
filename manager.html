@@ -311,9 +311,9 @@ function toggleDarkMode() {
 }
 window.pageTitle = l => ({ uz: 'Menejer - EduFlow', en: 'Manager - EduFlow', ru: 'Менеджер - EduFlow' })[l];
 // ===== MENEJER SAHIFASI (manager.html) =====
-// Rollar: bosh egasi (OWNER_EMAIL) > menejer > admin. Xodimlar Firestore 'staff/{email}' da.
+// Menejer bitta: MANAGER_EMAIL. Adminlar Firestore 'staff/{email}' da (role: 'admin').
 // Menejer: o'quvchilarga ball beradi/ayiradi, o'quvchi va ustoz akkauntlarini o'chiradi, adminlarni qo'shadi/o'chiradi.
-const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
+const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
 (function () {
     let fbApp, auth, db, me = null, role = null, myName = '', mode = 'login', authReady = false;
     let users = [], teachers = [], staff = [], points = {}, unsubs = [];
@@ -327,7 +327,7 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
     const dt = iso => { const d = new Date(iso); return isNaN(d) ? '-' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(); };
     const card = 'bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl';
     const muted = 'text-slate-500 dark:text-gray-400';
-    const ROLE = { owner: ['Bosh egasi', 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'], manager: ['Menejer', 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'], admin: ['Admin', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'] };
+    const ROLE = { manager: ['Menejer', 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'], admin: ['Admin', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'] };
     const ERR = {
         'auth/invalid-credential': "Email yoki parol noto'g'ri.", 'auth/wrong-password': "Parol noto'g'ri.", 'auth/user-not-found': "Bunday akkaunt topilmadi.",
         'auth/invalid-login-credentials': "Email yoki parol noto'g'ri.", 'auth/email-already-in-use': "Bu email bilan akkaunt bor. \"Kirish\" orqali davom eting.",
@@ -354,7 +354,7 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
     function showAuth(msg) {
         host().innerHTML = `<div class="max-w-sm mx-auto py-8">
             <h1 class="fd text-2xl font-bold">Menejer paneli</h1>
-            <p class="text-sm ${muted} mt-2 mb-6">Bosh egasi, menejer yoki admin tayinlagan email bilan kiring.</p>
+            <p class="text-sm ${muted} mt-2 mb-6">Menejer paneli faqat menejer uchun. Adminlar shu yerda parol o'rnatadi.</p>
             <form onsubmit="mAuth(event)" class="space-y-4">
                 <div class="flex gap-2 p-1 bg-slate-200 dark:bg-gray-700 rounded-lg">
                     <button type="button" id="m-t-login" onclick="mSetMode('login')" class="flex-1 tbtn">Kirish</button>
@@ -365,7 +365,7 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
                 <p id="m-err" class="text-sm text-rose-600 dark:text-rose-400 min-h-[1.25rem]" role="alert">${esc(msg || '')}</p>
                 <button id="m-go" class="tbtn tbp w-full py-3">Kirish</button>
                 <button type="button" onclick="mForgot()" class="text-sm text-violet-700 dark:text-violet-400 font-semibold">Parolni unutdim</button>
-                <p id="m-hint" class="hidden text-xs ${muted}">Akkaunt yaratish faqat tayinlangan xodimlar uchun: avval menejer yoki bosh egasi emailingizni "Xodimlar" ro'yxatiga qo'shishi kerak.</p>
+                <p id="m-hint" class="hidden text-xs ${muted}">Akkaunt yaratish adminlar uchun: avval menejer emailingizni "Adminlar" ro'yxatiga qo'shishi kerak. Keyin shu email va parol bilan admin panelga kirasiz.</p>
             </form></div>`;
         mSetMode(mode); tr();
     }
@@ -400,15 +400,15 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
         if (!u) { authReady = true; showAuth(); return; }
         host().innerHTML = `<p class="py-16 text-center ${muted}">Yuklanmoqda...</p>`; tr();
         const em = lc(u.email);
-        if (em === OWNER_EMAIL) { role = 'owner'; myName = 'Bosh egasi'; }
+        if (em === MANAGER_EMAIL) { role = 'manager'; myName = 'Menejer'; }
         else {
             try {
                 const d = await db.collection('staff').doc(em).get();
-                if (d.exists && ['manager', 'admin'].includes(d.data().role)) { role = d.data().role; myName = d.data().name || em; }
+                if (d.exists && d.data().role === 'admin') { role = 'admin'; myName = d.data().name || em; }
             } catch (x) { console.warn('staff:', x && x.message); }
         }
         authReady = true;
-        if (role === 'owner' || role === 'manager') { startWatch(); shell(); render(); }
+        if (role === 'manager') { startWatch(); shell(); render(); }
         else showNoAccess();
     }
     function showNoAccess() {
@@ -417,7 +417,7 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
             <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${adm ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-rose-100 dark:bg-rose-900/40'}"><i class="fa-solid ${adm ? 'fa-user-shield text-amber-600' : 'fa-lock text-rose-600'} text-3xl"></i></div>
             <h1 class="fd text-2xl font-bold mt-5">${adm ? 'Siz adminsiz' : "Menejer huquqi yo'q"}</h1>
             <p class="${muted} mt-3"><span translate="no">${esc(me.email)}</span></p>
-            <p class="${muted} mt-2">${adm ? "Menejer paneli faqat menejerlar uchun. Admin panelidan foydalaning." : "Bu email xodimlar ro'yxatida yo'q. Menejer yoki bosh egasi sizni qo'shishi kerak."}</p>
+            <p class="${muted} mt-2">${adm ? "Menejer paneli faqat menejerlar uchun. Admin panelidan foydalaning." : "Bu email adminlar ro'yxatida yo'q. Menejer sizni qo'shishi kerak."}</p>
             <div class="flex justify-center gap-2 mt-6">${adm ? '<a href="admin.html" class="tbtn tbp">Admin paneli</a>' : ''}<button onclick="mOut()" class="tbtn tbg">Chiqish</button></div></div>`;
         tr();
     }
@@ -429,11 +429,11 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
         unsubs.push(keep('users', s => { users = s.docs.map(d => ({ _id: d.id, ...d.data() })).filter(u => u && u.email).sort((a, b) => (b.registeredAt || '').localeCompare(a.registeredAt || '')); if (tab === 'students') renderBody(); }));
         unsubs.push(keep('points', s => { points = {}; s.forEach(d => { points[d.id] = +d.data().balance || 0; }); if (tab === 'students') renderBody(); }));
         unsubs.push(keep('teachers', s => { teachers = s.docs.map(d => ({ _id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')); if (tab === 'teachers') renderBody(); }));
-        unsubs.push(keep('staff', s => { staff = s.docs.map(d => ({ _id: d.id, ...d.data() })).sort((a, b) => (a.role === b.role ? 0 : a.role === 'manager' ? -1 : 1) || (a.createdAt || '').localeCompare(b.createdAt || '')); if (tab === 'staff') renderBody(); }));
+        unsubs.push(keep('staff', s => { staff = s.docs.map(d => ({ _id: d.id, ...d.data() })).filter(x => x.role === 'admin').sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '')); if (tab === 'staff') renderBody(); }));
     }
 
     // ===== QOBIQ VA YO'NALISH =====
-    const TABS = [['students', 'fa-user-graduate', "O'quvchilar"], ['teachers', 'fa-chalkboard-user', 'Ustozlar'], ['staff', 'fa-user-shield', 'Xodimlar']];
+    const TABS = [['students', 'fa-user-graduate', "O'quvchilar"], ['teachers', 'fa-chalkboard-user', 'Ustozlar'], ['staff', 'fa-user-shield', 'Adminlar']];
     function shell() {
         host().innerHTML = `<nav class="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-gray-200 dark:border-gray-800">
             ${TABS.map(([k, ic, l]) => `<a class="tnavb" data-v="${k}" href="#/${k}"><i class="fa-solid ${ic}"></i>${l}</a>`).join('')}
@@ -444,7 +444,7 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
         const t = location.hash.replace(/^#\/?/, '').split('/')[0];
         tab = TABS.some(x => x[0] === t) ? t : 'students';
         q = ''; ptsClose();
-        if (role === 'owner' || role === 'manager') render();
+        if (role === 'manager') render();
     }
     function render() {
         if (!$('#m-main')) shell();
@@ -572,52 +572,44 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
         } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
     }
 
-    // ===== XODIMLAR (adminlar va menejerlar) =====
-    const canDelete = s => role === 'owner' || (role === 'manager' && s.role === 'admin');
+    // ===== ADMINLAR =====
     function vStaff() {
         const list = staff.filter(s => match(s.name, s.email));
-        const roleOpts = role === 'owner' ? `<option value="admin">Admin</option><option value="manager">Menejer</option>` : `<option value="admin">Admin</option>`;
-        const ownerRow = match('Bosh egasi', OWNER_EMAIL) ? `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
-                <div class="flex-1 min-w-[12rem]"><div class="flex items-center gap-2"><span class="font-semibold">Bosh egasi</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE.owner[1]}">${ROLE.owner[0]}</span></div>
-                <div class="text-xs ${muted}"><span translate="no">${OWNER_EMAIL}</span></div></div>
-                <span class="text-xs ${muted}">O'chirib bo'lmaydi</span></li>` : '';
-        return `<h1 class="fd text-2xl font-bold mb-5">Xodimlar</h1>
-            <form onsubmit="mStaffAdd(event)" class="${card} p-4 mb-6 grid sm:grid-cols-[1fr_1fr_10rem_auto] gap-3 items-end">
+        const meRow = match('Menejer', MANAGER_EMAIL) ? `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                <div class="flex-1 min-w-[12rem]"><div class="flex items-center gap-2"><span class="font-semibold">Menejer</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE.manager[1]}">${ROLE.manager[0]}</span><span class="text-xs ${muted}">(siz)</span></div>
+                <div class="text-xs ${muted}"><span translate="no">${MANAGER_EMAIL}</span></div></div></li>` : '';
+        return `<h1 class="fd text-2xl font-bold mb-5">Adminlar</h1>
+            <form onsubmit="mStaffAdd(event)" class="${card} p-4 mb-6 grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
                 <div><label class="text-sm font-semibold" for="s-email">Email</label><input id="s-email" type="email" required class="tinp mt-1" placeholder="admin@gmail.com" autocomplete="off"></div>
                 <div><label class="text-sm font-semibold" for="s-name">Ism</label><input id="s-name" maxlength="60" class="tinp mt-1" autocomplete="off"></div>
-                <div><label class="text-sm font-semibold" for="s-role">Rol</label><select id="s-role" class="tinp mt-1">${roleOpts}</select></div>
-                <button class="tbtn tbp"><i class="fa-solid fa-plus mr-1"></i>Qo'shish</button>
+                <button class="tbtn tbp"><i class="fa-solid fa-plus mr-1"></i>Admin qo'shish</button>
             </form>
-            ${toolbar(list.length + (ownerRow ? 1 : 0), "Ism yoki email bo'yicha qidiring", '')}
-            <ul class="space-y-2">${ownerRow}${list.map(s => {
-                const r = ROLE[s.role] || ROLE.admin, self = lc(s.email) === lc(me.email);
-                return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
-                    <div class="flex-1 min-w-[12rem]"><div class="flex flex-wrap items-center gap-2"><span translate="no" class="font-semibold">${esc(s.name || s.email)}</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${r[1]}">${r[0]}</span>${self ? `<span class="text-xs ${muted}">(siz)</span>` : ''}</div>
-                    <div class="text-xs ${muted}"><span translate="no">${esc(s.email)}</span> · <span>qo'shgan:</span> <span translate="no">${esc(s.addedBy || '-')}</span> · <span>${dt(s.createdAt)}</span></div></div>
-                    ${canDelete(s) && !self ? `<button onclick="mStaffDel('${esc(s._id)}')" class="tbtn tbg text-rose-600"><i class="fa-solid fa-trash mr-1"></i>O'chirish</button>` : ''}</li>`;
-            }).join('')}</ul>
+            ${toolbar(list.length, "Ism yoki email bo'yicha qidiring", '')}
+            <ul class="space-y-2">${meRow}${list.map(s => `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                    <div class="flex-1 min-w-[12rem]"><div class="flex flex-wrap items-center gap-2"><span translate="no" class="font-semibold">${esc(s.name || s.email)}</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE.admin[1]}">${ROLE.admin[0]}</span></div>
+                    <div class="text-xs ${muted}"><span translate="no">${esc(s.email)}</span> · <span>${dt(s.createdAt)}</span></div></div>
+                    <button onclick="mStaffDel('${esc(s._id)}')" class="tbtn tbg text-rose-600"><i class="fa-solid fa-trash mr-1"></i>O'chirish</button></li>`).join('')}</ul>
+            ${list.length ? '' : `<p class="${muted} mt-3">Hali admin yo'q. Yuqoridagi forma orqali qo'shing.</p>`}
             <div class="text-xs ${muted} mt-5 space-y-1">
-                <p>Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi. Menejer bundan tashqari o'quvchilarga ball beradi, akkauntlarni o'chiradi va adminlarni qo'shadi.</p>
-                <p>Yangi xodim shu sahifadagi "Akkaunt yaratish" orqali o'sha email bilan parol o'rnatadi.</p>
+                <p>Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi.</p>
+                <p>Yangi admin shu sahifadagi "Akkaunt yaratish" orqali o'sha email bilan parol o'rnatadi.</p>
             </div>`;
     }
     async function mStaffAdd(e) {
         e.preventDefault();
-        const em = lc($('#s-email').value), name = $('#s-name').value.trim().slice(0, 60), r = $('#s-role').value;
+        const em = lc($('#s-email').value), name = $('#s-name').value.trim().slice(0, 60);
         if (!/^[^\s@/]+@[^\s@/]+\.[^\s@/]{2,}$/.test(em)) { toast("Email manzili noto'g'ri.", true); return; }
-        if (em === OWNER_EMAIL) { toast('Bu bosh egasining emaili.', true); return; }
-        const ex = staff.find(s => lc(s.email) === em);
-        if (ex) { toast("Bu email allaqachon xodimlar ro'yxatida.", true); return; }
-        if (r === 'manager' && role !== 'owner') { toast("Menejerni faqat bosh egasi tayinlaydi.", true); return; }
+        if (em === MANAGER_EMAIL) { toast("Bu sizning (menejer) emailingiz. Uni qo'shish shart emas.", true); return; }
+        if (staff.some(s => lc(s.email) === em)) { toast("Bu email allaqachon adminlar ro'yxatida.", true); return; }
         try {
-            await db.collection('staff').doc(em).set({ email: em, name, role: r, addedBy: lc(me.email), createdAt: new Date().toISOString() });
-            toast(r === 'manager' ? "Menejer qo'shildi." : "Admin qo'shildi."); e.target.reset();
+            await db.collection('staff').doc(em).set({ email: em, name, role: 'admin', addedBy: lc(me.email), createdAt: new Date().toISOString() });
+            toast("Admin qo'shildi."); e.target.reset();
         } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
     }
     async function mStaffDel(id) {
-        const s = staff.find(x => x._id === id); if (!s || !canDelete(s)) return;
-        if (!confirm(`"${s.name || s.email}" (${(ROLE[s.role] || ROLE.admin)[0]}) ni xodimlardan o'chirasizmi? U admin huquqlarini yo'qotadi.`)) return;
-        try { await db.collection('staff').doc(id).delete(); toast("Xodim o'chirildi."); }
+        const s = staff.find(x => x._id === id); if (!s) return;
+        if (!confirm(`"${s.name || s.email}" ni adminlardan o'chirasizmi? U admin huquqlarini yo'qotadi.`)) return;
+        try { await db.collection('staff').doc(id).delete(); toast("Admin o'chirildi."); }
         catch (x) { toast("O'chirilmadi. " + fsErr(x), true); }
     }
 
@@ -641,6 +633,17 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Adminlar", "Admins", "Администраторы"],
+        ["Admin qo'shish", "Add admin", "Добавить администратора"],
+        ["Admin o'chirildi.", "Admin removed.", "Администратор удалён."],
+        ["Menejer paneli faqat menejer uchun. Adminlar shu yerda parol o'rnatadi.", "The manager panel is for the manager only. Admins set their password here.", "Панель только для менеджера. Администраторы задают здесь пароль."],
+        ["Akkaunt yaratish adminlar uchun: avval menejer emailingizni \"Adminlar\" ro'yxatiga qo'shishi kerak. Keyin shu email va parol bilan admin panelga kirasiz.", "Account creation is for admins: the manager must first add your email to the Admins list. Then log in to the admin panel with this email and password.", "Создание аккаунта для администраторов: менеджер сначала должен добавить ваш email в список «Администраторы». Затем входите в панель администратора с этим email и паролем."],
+        ["Bu email adminlar ro'yxatida yo'q. Menejer sizni qo'shishi kerak.", "This email isn't on the admin list. The manager needs to add you.", "Этого email нет в списке администраторов. Вас должен добавить менеджер."],
+        ["Hali admin yo'q. Yuqoridagi forma orqali qo'shing.", "No admins yet. Add one with the form above.", "Администраторов пока нет. Добавьте через форму выше."],
+        ["Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi.", "Admins manage teachers, courses, comments and Edu-Shop orders in the admin panel (admin.html).", "Администратор управляет преподавателями, курсами, отзывами и заказами Edu-Shop в панели (admin.html)."],
+        ["Yangi admin shu sahifadagi \"Akkaunt yaratish\" orqali o'sha email bilan parol o'rnatadi.", "A new admin sets a password for that email via \"Create account\" on this page.", "Новый администратор задаёт пароль для этого email через «Создать аккаунт» на этой странице."],
+        ["Bu sizning (menejer) emailingiz. Uni qo'shish shart emas.", "This is your (manager) email. No need to add it.", "Это ваш email (менеджер). Добавлять его не нужно."],
+        ["Bu email allaqachon adminlar ro'yxatida.", "This email is already on the admin list.", "Этот email уже в списке администраторов."],
         ["Menejer", "Manager", "Менеджер"],
         ["Menejer paneli", "Manager panel", "Панель менеджера"],
         ["Bosh egasi, menejer yoki admin tayinlagan email bilan kiring.", "Log in with the email the owner, a manager or an admin assigned to you.", "Войдите с email, назначенным владельцем, менеджером или администратором."],
@@ -687,6 +690,8 @@ const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
         ["Admin qo'shildi.", "Admin added.", "Администратор добавлен."],
         ["Xodim o'chirildi.", "Staff member removed.", "Сотрудник удалён."],
         ["Ruxsat yo'q: Firestore Rules'ni yangilang (firestore.rules).", "Access denied: update Firestore Rules (firestore.rules).", "Нет доступа: обновите Firestore Rules (firestore.rules)."],
+        ["Akkauntingiz o'chirilgan", "Your account has been deleted", "Ваш аккаунт удалён"],
+        ["Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.", "This teacher account was deleted by an EduFlow manager. Contact EduFlow if you have questions.", "Этот аккаунт преподавателя удалён менеджером EduFlow. Если есть вопросы, свяжитесь с EduFlow."],
         ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],
         ["Ball qo'shish", "Add points", "Начислить баллы"],
         ["Ball ayirish", "Deduct points", "Списать баллы"],
