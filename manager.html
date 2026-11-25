@@ -579,9 +579,10 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
                 <div class="flex-1 min-w-[12rem]"><div class="flex items-center gap-2"><span class="font-semibold">Menejer</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE.manager[1]}">${ROLE.manager[0]}</span><span class="text-xs ${muted}">(siz)</span></div>
                 <div class="text-xs ${muted}"><span translate="no">${MANAGER_EMAIL}</span></div></div></li>` : '';
         return `<h1 class="fd text-2xl font-bold mb-5">Adminlar</h1>
-            <form onsubmit="mStaffAdd(event)" class="${card} p-4 mb-6 grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+            <form novalidate onsubmit="mStaffAdd(event)" class="${card} p-4 mb-6 grid sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end">
+                <div><label class="text-sm font-semibold" for="s-name">Ism</label><input id="s-name" maxlength="60" required class="tinp mt-1" placeholder="Masalan: Sherzod Razakov" autocomplete="off"></div>
                 <div><label class="text-sm font-semibold" for="s-email">Email</label><input id="s-email" type="email" required class="tinp mt-1" placeholder="admin@gmail.com" autocomplete="off"></div>
-                <div><label class="text-sm font-semibold" for="s-name">Ism</label><input id="s-name" maxlength="60" class="tinp mt-1" autocomplete="off"></div>
+                <div><label class="text-sm font-semibold" for="s-pass">Parol</label><div class="relative mt-1"><input id="s-pass" type="password" required minlength="6" maxlength="64" class="tinp pr-10" placeholder="Kamida 6 belgi" autocomplete="new-password"><button type="button" onclick="mEye()" aria-label="Parolni ko'rsatish" class="absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-1 text-slate-500 dark:text-gray-400"><i id="s-eye" class="fa-solid fa-eye"></i></button></div></div>
                 <button class="tbtn tbp"><i class="fa-solid fa-plus mr-1"></i>Admin qo'shish</button>
             </form>
             ${toolbar(list.length, "Ism yoki email bo'yicha qidiring", '')}
@@ -592,19 +593,48 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
             ${list.length ? '' : `<p class="${muted} mt-3">Hali admin yo'q. Yuqoridagi forma orqali qo'shing.</p>`}
             <div class="text-xs ${muted} mt-5 space-y-1">
                 <p>Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi.</p>
-                <p>Yangi admin shu sahifadagi "Akkaunt yaratish" orqali o'sha email bilan parol o'rnatadi.</p>
+                <p>Admin qo'shilganda uning akkaunti shu email va parol bilan yaratiladi: admin admin panelga (admin.html) shu email va parol bilan kiradi. Parolni unga o'zingiz bering, keyin u "Parolni unutdim" orqali o'zgartirishi mumkin.</p>
+                <p>Agar bu email bilan akkaunt oldindan bo'lsa, parol o'zgarmaydi: admin eski paroli bilan kiradi.</p>
             </div>`;
+    }
+    function mEye() {
+        const p = $('#s-pass'), ic = $('#s-eye'); if (!p) return;
+        const show = p.type === 'password'; p.type = show ? 'text' : 'password';
+        ic.className = 'fa-solid ' + (show ? 'fa-eye-slash' : 'fa-eye');
+    }
+    // Yangi admin akkauntini alohida (yashirin) Firebase ulanishi orqali yaratish: menejer tizimdan chiqib ketmaydi
+    function creatorAuth() {
+        let app; try { app = firebase.app('mgr-create'); } catch (e) { app = firebase.initializeApp(FIREBASE_CONFIG, 'mgr-create'); }
+        const a = app.auth();
+        try { if (firebase.auth.Auth && a.setPersistence) a.setPersistence(firebase.auth.Auth.Persistence.NONE); } catch (e) { }
+        return a;
     }
     async function mStaffAdd(e) {
         e.preventDefault();
-        const em = lc($('#s-email').value), name = $('#s-name').value.trim().slice(0, 60);
+        if (busy) return;
+        const form = e.target;
+        const name = $('#s-name').value.trim().slice(0, 60), em = lc($('#s-email').value), pass = $('#s-pass').value;
+        if (!name) { toast('Admin ismini kiriting.', true); return; }
         if (!/^[^\s@/]+@[^\s@/]+\.[^\s@/]{2,}$/.test(em)) { toast("Email manzili noto'g'ri.", true); return; }
+        if (pass.length < 6) { toast("Parol kamida 6 belgidan iborat bo'lsin.", true); return; }
         if (em === MANAGER_EMAIL) { toast("Bu sizning (menejer) emailingiz. Uni qo'shish shart emas.", true); return; }
         if (staff.some(s => lc(s.email) === em)) { toast("Bu email allaqachon adminlar ro'yxatida.", true); return; }
+        busy = true;
+        const btn = form.querySelector('button.tbp'); if (btn) { btn.disabled = true; btn.classList.add('opacity-60'); }
+        let existed = false;
+        const ca = creatorAuth();
+        try {
+            await ca.createUserWithEmailAndPassword(em, pass);
+        } catch (x) {
+            if (x && x.code === 'auth/email-already-in-use') existed = true;
+            else { toast((ERR[x && x.code] || (x && x.message) || '') + '', true); busy = false; if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); } return; }
+        } finally { try { await ca.signOut(); } catch (e) { } }
         try {
             await db.collection('staff').doc(em).set({ email: em, name, role: 'admin', addedBy: lc(me.email), createdAt: new Date().toISOString() });
-            toast("Admin qo'shildi."); e.target.reset();
+            toast(existed ? "Admin qo'shildi. Bu email bilan akkaunt oldindan bor edi, parol o'zgarmadi." : "Admin qo'shildi. U shu email va parol bilan admin panelga kira oladi.");
+            form.reset();
         } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+        busy = false; if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); }
     }
     async function mStaffDel(id) {
         const s = staff.find(x => x._id === id); if (!s) return;
@@ -613,7 +643,7 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
         catch (x) { toast("O'chirilmadi. " + fsErr(x), true); }
     }
 
-    Object.assign(window, { mAuth, mSetMode, mForgot, mOut, mQ, mDel, mStudentDel, mPts, mPtsGo, mPtsClose: ptsClose, mTeacherDel, mStaffAdd, mStaffDel });
+    Object.assign(window, { mAuth, mSetMode, mForgot, mOut, mQ, mDel, mStudentDel, mPts, mPtsGo, mPtsClose: ptsClose, mTeacherDel, mStaffAdd, mStaffDel, mEye });
     window.addEventListener('hashchange', route);
     window.managerStart = function () {
         fbApp = firebase.initializeApp(FIREBASE_CONFIG, 'manager');
@@ -633,6 +663,15 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Masalan: Sherzod Razakov", "For example: Sherzod Razakov", "Например: Шерзод Разаков"],
+        ["Kamida 6 belgi", "At least 6 characters", "Минимум 6 символов"],
+        ["Parolni ko'rsatish", "Show password", "Показать пароль"],
+        ["Admin ismini kiriting.", "Enter the admin's name.", "Введите имя администратора."],
+        ["Parol kamida 6 belgidan iborat bo'lsin.", "Password must be at least 6 characters.", "Пароль должен быть не короче 6 символов."],
+        ["Admin qo'shildi. Bu email bilan akkaunt oldindan bor edi, parol o'zgarmadi.", "Admin added. An account with this email already existed, so the password didn't change.", "Администратор добавлен. Аккаунт с этим email уже был, пароль не изменён."],
+        ["Admin qo'shildi. U shu email va parol bilan admin panelga kira oladi.", "Admin added. They can log in to the admin panel with this email and password.", "Администратор добавлен. Он может войти в панель с этим email и паролем."],
+        ["Admin qo'shilganda uning akkaunti shu email va parol bilan yaratiladi: admin admin panelga (admin.html) shu email va parol bilan kiradi. Parolni unga o'zingiz bering, keyin u \"Parolni unutdim\" orqali o'zgartirishi mumkin.", "When you add an admin, their account is created with this email and password: they log in to the admin panel (admin.html) with them. Give them the password yourself; they can change it later via \"Forgot password\".", "При добавлении администратора создаётся аккаунт с этим email и паролем: он входит в панель (admin.html) с ними. Передайте пароль сами; позже его можно сменить через «Забыли пароль»."],
+        ["Agar bu email bilan akkaunt oldindan bo'lsa, parol o'zgarmaydi: admin eski paroli bilan kiradi.", "If an account with this email already exists, the password doesn't change: the admin logs in with their old password.", "Если аккаунт с этим email уже есть, пароль не меняется: администратор входит со старым паролем."],
         ["Ishdan haydash", "Dismiss", "Уволить"],
         ["Ishga qaytarish", "Reinstate", "Вернуть на работу"],
         ["Ishdan haydalgan", "Dismissed", "Уволен"],
