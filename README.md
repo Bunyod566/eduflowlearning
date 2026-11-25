@@ -13,6 +13,7 @@ Sahifalar o'rtasida o'tish sahifani qayta yuklamaydi, manzillar `#` bilan boshla
 | `/payment.html?order=...` | To'lovdan qaytgandan keyingi natija (netlify.toml uni index.html ga yo'naltiradi) |
 
 Alohida qolgan fayllar:
+- `manager.html`: menejer paneli (o'quvchilar, ustozlar, xodimlar).
 - `teacher.html`: ustozlar sayti (`teacher.html#/teacher-courses`, `#/teacher-edit/ID`, `#/teacher-profile`). Ustozlar uni to'g'ridan-to'g'ri manzil orqali ochadi (asosiy saytda havola yo'q).
 - `admin.html`: admin panel (alohida sayt).
 - `netlify.toml`, `netlify/functions/`: to'lov serveri (Payme, Click, Uzum Bank). Sozlash: `PAYMENTS-SETUP.md`, kalitlar namunasi: `.env.example`.
@@ -38,6 +39,14 @@ O'quvchi o'z ballarini asosiy saytda ko'radi: sarlavhadagi tanga belgisi va Prof
 
 Firestore kolleksiyalari: `groups`, `points` (kaliti o'quvchi emaili), `pointLog`, `attendance`.
 
+## Menejer paneli (manager.html)
+Rollar: **bosh egasi** (`bunedniyazov2014@gmail.com`, o'chirib bo'lmaydi) > **menejer** > **admin**. Xodimlar Firestore'dagi `staff` kolleksiyasida (hujjat nomi = email kichik harflarda).
+- **Menejer**: o'quvchilarga ball qo'shadi/ayiradi (izoh bilan, ball tarixida "Menejer" bo'lib ko'rinadi), o'quvchi va ustoz akkauntlarini o'chiradi va tiklaydi, adminlarni qo'shadi va o'chiradi.
+- **Bosh egasi**: menejer imkoniyatlari + menejerlarni tayinlaydi va o'chiradi.
+- **Admin**: `admin.html` da ishlaydi (ustozlar, kurslar, sharhlar, Edu-Shop). Menejer panelini ocholmaydi.
+- Yangi xodim: menejer emailini "Xodimlar" ga qo'shadi, xodim `manager.html` dagi **Akkaunt yaratish** orqali shu email bilan parol o'rnatadi. Admin keyin `admin.html` dagi Firebase kirishida shu email va parol bilan kiradi.
+- O'chirish: o'quvchi saytga kira olmaydi (ballari saqlanadi); ustoz ustozlar saytida hech narsa qila olmaydi (kurslari saqlanadi). Ikkalasini ham tiklash mumkin. Firebase'dagi kirish akkauntining o'zi server talab qilgani uchun o'chirilmaydi, faqat huquqlari yopiladi.
+
 ## Edu-Shop
 Asosiy saytning sarlavhasida **Edu-Shop** (`index.html#/shop`): o'quvchi ustozlardan olgan ballarini texnika, kitob va sovg'alarga almashtiradi. Buyurtma "kutilmoqda" holatida tushadi va shu ball "band qilingan" bo'ladi. Admin `admin.html` dagi **Edu-Shop buyurtmalari** bo'limida sovg'ani topshirganda **Topshirish** ni bosadi va ball shunda yechiladi (ball tarixida "Edu-Shop: ..." bo'lib ko'rinadi). Rad etilsa, ball qaytadi.
 Mahsulotlar ro'yxati kod ichida (`SHOP_ITEMS`): uni `index.html` va `admin.html` da bir xil o'zgartirish kerak. Firestore kolleksiyasi: `shopOrders`.
@@ -62,9 +71,22 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.firebase.sign_in_provider == 'password';
     }
-    // Admin akkaunti
-    function admin() {
+    // Bosh egasi (o'chirib bo'lmaydi)
+    function owner() {
       return pw() && request.auth.token.email == 'bunedniyazov2014@gmail.com';
+    }
+    // Xodimlar ro'yxatidagi rol: staff/{email}.role = 'admin' yoki 'manager'
+    function staffRole() {
+      return exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
+        ? get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role : '';
+    }
+    // Menejer: bosh egasi yoki menejer rolidagi xodim
+    function manager() {
+      return owner() || (pw() && staffRole() == 'manager');
+    }
+    // Admin: bosh egasi, menejer yoki admin rolidagi xodim
+    function admin() {
+      return owner() || (pw() && staffRole() in ['admin', 'manager']);
     }
     // Admin tasdiqlagan ustoz
     function teacher() {
@@ -155,6 +177,18 @@ service cloud.firestore {
         && resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerUid == request.auth.uid;
       allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+    }
+
+    // Xodimlar: bosh egasi menejer va admin tayinlaydi; menejer faqat admin qo'shadi va o'chiradi
+    match /staff/{email} {
+      allow read: if pw() && (request.auth.token.email == email || admin());
+      allow create: if request.resource.data.email == email
+        && (owner() && request.resource.data.role in ['admin', 'manager']
+          || manager() && request.resource.data.role == 'admin');
+      allow update: if request.resource.data.email == email
+        && (owner() && request.resource.data.role in ['admin', 'manager']
+          || manager() && resource.data.role == 'admin' && request.resource.data.role == 'admin');
+      allow delete: if owner() || (manager() && resource.data.role == 'admin');
     }
 
     // orders va txnIndex: faqat to'lov serveri kiradi, saytdan yopiq.

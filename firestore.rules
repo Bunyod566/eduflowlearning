@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Email/parol bilan kirgan foydalanuvchi (ustoz yoki admin)
+    function pw() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    // Bosh egasi (o'chirib bo'lmaydi)
+    function owner() {
+      return pw() && request.auth.token.email == 'bunedniyazov2014@gmail.com';
+    }
+    // Xodimlar ro'yxatidagi rol: staff/{email}.role = 'admin' yoki 'manager'
+    function staffRole() {
+      return exists(/databases/$(database)/documents/staff/$(request.auth.token.email))
+        ? get(/databases/$(database)/documents/staff/$(request.auth.token.email)).data.role : '';
+    }
+    // Menejer: bosh egasi yoki menejer rolidagi xodim
+    function manager() {
+      return owner() || (pw() && staffRole() == 'manager');
+    }
+    // Admin: bosh egasi, menejer yoki admin rolidagi xodim
+    function admin() {
+      return owner() || (pw() && staffRole() in ['admin', 'manager']);
+    }
+    // Admin tasdiqlagan ustoz
+    function teacher() {
+      return pw()
+        && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.get('approval', '') == 'approved';
+    }
+
+    // Foydalanuvchilar ro'yxati (asosiy sayt va admin panel)
+    match /users/{id} {
+      allow read, create, update: if true;
+      allow delete: if admin();
+    }
+
+    // Sharhlar: hamma o'qiydi, kirgan odam yozadi, o'zinikini yoki admin o'chiradi
+    match /comments/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 500;
+      allow delete: if request.auth != null
+        && (resource.data.uid == request.auth.uid || admin());
+    }
+
+    // Ustoz profili: yangi ustoz 'pending' bo'lib yaratiladi, tasdiqni faqat admin o'zgartiradi
+    match /teachers/{uid} {
+      allow read: if pw() && (request.auth.uid == uid || admin());
+      allow create: if pw() && request.auth.uid == uid
+        && request.resource.data.approval == 'pending';
+      allow update: if admin()
+        || (pw() && request.auth.uid == uid
+          && request.resource.data.approval == resource.data.get('approval', 'pending')
+          && request.resource.data.get('approvalReason', '') == resource.data.get('approvalReason', ''));
+      allow delete: if admin();
+    }
+
+    // Ustoz kurslari
+    match /teacherCourses/{id} {
+      allow read: if resource.data.status == 'approved'
+        || (pw() && (resource.data.ownerUid == request.auth.uid || admin()));
+      allow create: if teacher()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status in ['draft', 'pending'];
+      allow update: if admin()
+        || (teacher()
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.status in ['draft', 'pending']);
+      allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+    }
+
+    // Ustoz guruhlari: faqat guruh egasi (tasdiqlangan ustoz)
+    match /groups/{id} {
+      allow read: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+      allow create: if teacher()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.students.size() <= 100;
+      allow update: if teacher()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.students.size() <= 100;
+      allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+    }
+
+    // O'quvchi ballari: hamma ko'radi, tasdiqlangan ustozlar va admin (Edu-Shop) o'zgartiradi, 0 dan kam bo'lmaydi
+    match /points/{key} {
+      allow read: if true;
+      allow create, update: if (teacher() || admin())
+        && request.resource.data.balance is int
+        && request.resource.data.balance >= 0;
+      allow delete: if admin();
+    }
+
+    // Ball tarixi: faqat qo'shiladi, keyin o'zgartirib bo'lmaydi
+    match /pointLog/{id} {
+      allow read: if true;
+      allow create: if (teacher() || admin())
+        && request.resource.data.teacherUid == request.auth.uid
+        && request.resource.data.delta is int;
+      allow delete: if admin();
+    }
+
+    // Davomat: faqat guruh egasi
+    match /attendance/{id} {
+      allow read: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+      allow create: if teacher() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if teacher()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if pw() && (resource.data.ownerUid == request.auth.uid || admin());
+    }
+
+    // Xodimlar: bosh egasi menejer va admin tayinlaydi; menejer faqat admin qo'shadi va o'chiradi
+    match /staff/{email} {
+      allow read: if pw() && (request.auth.token.email == email || admin());
+      allow create: if request.resource.data.email == email
+        && (owner() && request.resource.data.role in ['admin', 'manager']
+          || manager() && request.resource.data.role == 'admin');
+      allow update: if request.resource.data.email == email
+        && (owner() && request.resource.data.role in ['admin', 'manager']
+          || manager() && resource.data.role == 'admin' && request.resource.data.role == 'admin');
+      allow delete: if owner() || (manager() && resource.data.role == 'admin');
+    }
+
+    // orders va txnIndex: faqat to'lov serveri kiradi, saytdan yopiq.
+    // Qolgan hamma narsa ham yopiq.
+
+    // Edu-Shop buyurtmalari: o'quvchi 'pending' buyurtma yuboradi, faqat admin topshiradi yoki rad etadi
+    match /shopOrders/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending'
+        && request.resource.data.key is string
+        && request.resource.data.itemId is string
+        && request.resource.data.price is int
+        && request.resource.data.price > 0
+        && request.resource.data.get('note', '').size() <= 120;
+      allow update, delete: if admin();
+    }
+  }
+}

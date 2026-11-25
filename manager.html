@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="uz" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menejer - EduFlow</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjOGI1Y2Y2Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzIyZDNlZSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxNTAiIGZpbGw9InVybCgjZykiLz4KICA8ZyBmaWxsPSIjZmZmIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyNTYgMjYyKSBzY2FsZSgwLjgpIHRyYW5zbGF0ZSgtMjU2IC0yNTYpIj4KICAgIDxwYXRoIGQ9Ik0yNTYgMTM2IEw0NjAgMjI2IEwyNTYgMzE2IEw1MiAyMjYgWiIvPgogICAgPHBhdGggZD0iTTE0NiAyODggTDI1NiAzMzYgTDM2NiAyODggTDM2NiAzNTAgUTI1NiA0MTIgMTQ2IDM1MCBaIi8+CiAgICA8cmVjdCB4PSI0MTAiIHk9IjIzOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjEwNCIgcng9IjkiLz4KICAgIDxyZWN0IHg9IjQwMSIgeT0iMzMwIiB3aWR0aD0iMzYiIGhlaWdodD0iNDYiIHJ4PSIxMiIvPgogIDwvZz4KPC9zdmc+Cg==">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAD7UlEQVRYhcXXTWwVVRTA8f89c+fRFspHSxEFATFQsIJpI40FBCUxytfGxI1sjEiIMW4ECUsTTZSFLlwYE4MmENiUhMSGQMCNIWwMiQHa9EPA8hEFCoTSQt+b9+YcF49XSjulD5DXu5mb3Mz5nZkz99yMI2F8sSW9EB9vUmGtCnNMmKEOpwImhgrk5/mruvvzIetmwjV17oKJHYmd7duzbXLXcMs9AH96YzLZsm9xfKCCH0TciOBj4cPuAxVyKrZ7wsTM5z9vrukbkcBXmwfmxl4PmVCXHOSJcFSsMG+Ng9z65q1VFwcT2PVhT2U6rDhhwpKnjBfW2yHX1Ly1qlcABlIV35UQR4XF6oNvANyXH9+ujQlan0LNR8Pz84BczuwlH7tgk7oS4wLqzEvAJq+Ot0uOF9Yd73gVXhgXPL82T0yoHiccE2q8OuRxcJ+C1+pCEDjekSWtj4yjgvhHxSsrHavrQ9bUh0wqz/ex915PcbwjS8upiOt3rVgcFXA7tvdbMfjsZ4VVDSFNdSGhTzpBIFb4oztHS2tE5/V4TNyE/PYbDScwXl7oeXNZyOJ5QbI6ZAQCTfM9TfM9527EtHRE/N6dJeuScRXDfbaz34bjeFi1zPNGY0jNNBkTftj4t1/5tTOi5VyUT2QIbgKS9OQxRuelmPYLMdnc4+M5hZ67SvvNOBFXVyhBQs0vXlf2Hs1w8ETE8qUhb9WHTJ3kimChN20cOx9xqc9YNF1ovxUn4irgx9rnt9LGoZMRh09FNNZ61jekeL46uSz/3FYOdUUcOZ9lIDYaZ3vMyai4Cfhim8zahpBZ1cL3vw0wscyxsT5FwxyPAzquxRxozXC5T1m3KMW6BSEHuiJMwNzouBZ2QTEdLgwdK2tDVtaGdF6JOXg6Yu/JDLGDSeXw7pIJvDorn9C+tszgd4UbHdf8GyiuvdqQ8tfODNg5s5zLvQrA7CkPlsTuxVgzJ2TpdE/QNkBkI/GRfeAhHexYe0R5GaxeGDIx5RLhO1njaHeWlr/zr39qmaOqzCHiULMRuIrhtnzdF5sgxR4sPoS65zzza4RpFQ4FbqaNv27F/NmTI8P94C9ODaipEI73ZBNxdaj7aFffVXXMeMJTbUTw0Wo+BMfEXRF1rnt8cFChW9TZ4XHCUbHDomL77/00lBgnq8h+2bNtcpeK7S4xjon7qW35lLMCEAXp7XHAmdLhnJLy9A4AAWj+ZEa/Sm6DOs6UAD+N6MbTr8y8M5gAQPPWqosZn1mB2I8aPPhN/F81N3E/WGV2RWtj9aWCm3i+bvildwGe982xVoW5JjyjUvg9Lxo3E3dVhe44sCNmsq9t+ZSzw63/AHLEbBpjn6u+AAAAAElFTkSuQmCC">
+    <link rel="apple-touch-icon" href="data:image/png;base64,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">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+        // Qorong'i rejimni sahifa chizilishidan oldin yoqish (sahifalar almashganda yaltirash bo'lmasligi uchun)
+        try { if (localStorage.getItem('eduflow_theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) { }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --violet: #6c5ce7;
+            --cyan: #22d3ee;
+            --ink: #0e1030;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        h1,
+        h2,
+        .font-display {
+            font-family: 'Unbounded', 'Manrope', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(60rem 40rem at 90% -10%, rgba(108, 92, 231, .14), transparent 60%), radial-gradient(50rem 35rem at -10% 45%, rgba(34, 211, 238, .10), transparent 60%);
+        }
+
+        ::selection {
+            background: var(--violet);
+            color: #fff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--violet), var(--cyan));
+            border-radius: 99px;
+        }
+
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            z-index: 100;
+            background: linear-gradient(90deg, #6c5ce7, #22d3ee, #f59e0b);
+        }
+
+        .bg-blue-600 {
+            background-image: linear-gradient(135deg, #7c6cf5, #2563eb);
+            box-shadow: 0 8px 24px -10px rgba(99, 102, 241, .7);
+        }
+
+        .bg-blue-600:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        button,
+        a {
+            transition: transform .2s, filter .2s, background-color .2s, color .2s;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--cyan);
+            outline-offset: 2px;
+        }
+
+        .course-card {
+            transition: transform .35s, box-shadow .35s, border-color .35s;
+        }
+
+        .course-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 26px 50px -22px rgba(108, 92, 231, .55);
+            border-color: rgba(108, 92, 231, .55);
+        }
+
+        .hero {
+            background: var(--ink);
+            --sx: 72%;
+            --sy: 30%;
+            --mx: 0;
+            --my: 0;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(26rem 26rem at var(--sx) var(--sy), rgba(108, 92, 231, .5), transparent 65%);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: .35;
+            background-image: linear-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .07) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(ellipse at 70% 40%, #000, transparent 75%);
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .5;
+            animation: drift 14s ease-in-out infinite alternate;
+        }
+
+        @keyframes drift {
+            to {
+                transform: translate(50px, -30px) scale(1.15);
+            }
+        }
+
+        .grad-text {
+            background: linear-gradient(90deg, #8b7cf6, #22d3ee, #fbbf24, #8b7cf6);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: sheen 8s linear infinite;
+        }
+
+        @keyframes sheen {
+            to {
+                background-position: 300% 0;
+            }
+        }
+
+        .rise {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: rise .9s cubic-bezier(.2, .7, .2, 1) forwards;
+            animation-delay: var(--d, 0s);
+        }
+
+        @keyframes rise {
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .float-card {
+            transition: transform .18s ease-out;
+            transform: translate3d(calc(var(--mx) * var(--z) * 1px), calc(var(--my) * var(--z) * 1px), 0) rotate(var(--r));
+        }
+
+        .marquee {
+            overflow: hidden;
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        }
+
+        .marquee-track {
+            display: flex;
+            gap: .75rem;
+            width: max-content;
+            animation: marquee 32s linear infinite;
+        }
+
+        .marquee:hover .marquee-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes marquee {
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .rise {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .smooth-scroll {
+            scroll-behavior: smooth;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+
+        .dark .glass {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+        }
+
+.tinp { width: 100%; border: 1px solid #d5d8e8; border-radius: .6rem; padding: .6rem .8rem; background: #fff; font-size: .9rem; }
+.tinp:focus { outline: 2px solid #22d3ee; border-color: transparent; }
+.dark .tinp { background: #1f2937; color: #f3f4f6; border-color: #374151; }
+/* Brauzer avto-to'ldirganda maydon oq-ko'k bo'lib qolmasin */
+.tinp:-webkit-autofill, .tinp:-webkit-autofill:hover, .tinp:-webkit-autofill:focus { -webkit-text-fill-color: #1e293b; box-shadow: 0 0 0 1000px #fff inset; caret-color: #1e293b; transition: background-color 9999s; }
+.dark .tinp:-webkit-autofill, .dark .tinp:-webkit-autofill:hover, .dark .tinp:-webkit-autofill:focus { -webkit-text-fill-color: #f3f4f6; box-shadow: 0 0 0 1000px #1f2937 inset; caret-color: #f3f4f6; }
+.tbtn { border-radius: .6rem; padding: .55rem 1rem; font-weight: 700; font-size: .875rem; transition: filter .2s; }
+.tbtn:hover { filter: brightness(1.08); }
+.tbp { background: #6c5ce7; color: #fff; }
+.tbg { border: 1px solid #d5d8e8; background: #fff; }
+.dark .tbg { background: #1f2937; border-color: #374151; color: #f3f4f6; }
+.tnavb { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .8rem; border-radius: .6rem; font-weight: 600; font-size: .9rem; }
+.tnavb:hover, .tnavb.on { background: rgba(108, 92, 231, .12); color: #6c5ce7; }
+
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-300">
+    <header class="sticky top-0 z-40 glass border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-white text-base shadow-lg"><i class="fa-solid fa-graduation-cap"></i></span>
+                <span class="font-display text-lg font-extrabold text-gray-900 dark:text-white">EduFlow</span>
+                <span class="text-sm font-bold text-violet-600 dark:text-cyan-400">Menejer</span>
+            </a>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <a href="index.html" class="hidden sm:inline text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400">EduFlow saytiga qaytish</a>
+                <select id="lang-select" onchange="changeLanguage(this.value)" aria-label="Til"
+                    class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm font-semibold">
+                    <option value="uz">O'zbek</option><option value="en">English</option><option value="ru">Русский</option>
+                </select>
+                <button onclick="toggleDarkMode()" aria-label="Qorong'i rejim"
+                    class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><i id="theme-icon" class="fa-solid fa-moon text-gray-600"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"></main>
+
+    <footer class="border-t border-gray-200 dark:border-gray-800 py-6 text-center text-sm text-gray-500 dark:text-gray-400">© 2026 EduFlow Platformasi. Barcha huquqlar himoyalangan.</footer>
+
+    <script>
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCxIi1qDBVVBBFNRJUBm7hVRJM_QgUgMKA",
+    authDomain: "eduflow-92e86.firebaseapp.com",
+    projectId: "eduflow-92e86",
+    appId: "1:249900542704:web:93adea6f1ad23e71b0f035"
+};
+let currentLang = 'uz';
+try { currentLang = localStorage.getItem('eduflow_lang') || 'uz'; } catch (e) { }
+function changeLanguage(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('eduflow_lang', lang); } catch (e) { }
+}
+function setThemeIcon() {
+    const d = document.documentElement.classList.contains('dark');
+    document.getElementById('theme-icon').className = d ? 'fa-solid fa-sun text-yellow-400' : 'fa-solid fa-moon text-gray-600';
+}
+function toggleDarkMode() {
+    const d = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('eduflow_theme', d ? 'dark' : 'light'); } catch (e) { }
+    setThemeIcon();
+}
+window.pageTitle = l => ({ uz: 'Menejer - EduFlow', en: 'Manager - EduFlow', ru: 'Менеджер - EduFlow' })[l];
+// ===== MENEJER SAHIFASI (manager.html) =====
+// Rollar: bosh egasi (OWNER_EMAIL) > menejer > admin. Xodimlar Firestore 'staff/{email}' da.
+// Menejer: o'quvchilarga ball beradi/ayiradi, o'quvchi va ustoz akkauntlarini o'chiradi, adminlarni qo'shadi/o'chiradi.
+const OWNER_EMAIL = 'bunedniyazov2014@gmail.com';
+(function () {
+    let fbApp, auth, db, me = null, role = null, myName = '', mode = 'login', authReady = false;
+    let users = [], teachers = [], staff = [], points = {}, unsubs = [];
+    let tab = 'students', q = '', showDeleted = false, ptsCtx = null, busy = false;
+    const $ = s => document.querySelector(s);
+    const host = () => document.getElementById('app-content');
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const lc = s => String(s || '').trim().toLowerCase();
+    const pkey = e => encodeURIComponent(lc(e));
+    const two = n => String(n).padStart(2, '0');
+    const dt = iso => { const d = new Date(iso); return isNaN(d) ? '-' : two(d.getDate()) + '.' + two(d.getMonth() + 1) + '.' + d.getFullYear(); };
+    const card = 'bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl';
+    const muted = 'text-slate-500 dark:text-gray-400';
+    const ROLE = { owner: ['Bosh egasi', 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'], manager: ['Menejer', 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'], admin: ['Admin', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'] };
+    const ERR = {
+        'auth/invalid-credential': "Email yoki parol noto'g'ri.", 'auth/wrong-password': "Parol noto'g'ri.", 'auth/user-not-found': "Bunday akkaunt topilmadi.",
+        'auth/invalid-login-credentials': "Email yoki parol noto'g'ri.", 'auth/email-already-in-use': "Bu email bilan akkaunt bor. \"Kirish\" orqali davom eting.",
+        'auth/weak-password': "Parol kamida 6 belgidan iborat bo'lsin.", 'auth/invalid-email': "Email manzili noto'g'ri.",
+        'auth/too-many-requests': "Juda ko'p urinish. Birozdan so'ng qayta urinib ko'ring.", 'auth/network-request-failed': "Internet aloqasi yo'q.",
+        'auth/operation-not-allowed': "Firebase'da Email/Parol usuli yoqilmagan."
+    };
+    function fsErr(x) {
+        const c = x && x.code;
+        if (c === 'permission-denied') return "Ruxsat yo'q: Firestore Rules'ni yangilang (firestore.rules).";
+        if (c === 'unavailable') return "Internet aloqasi yo'q.";
+        return (x && x.message) || c || '';
+    }
+    function toast(msg, bad) {
+        let t = $('#toast');
+        if (!t) { document.body.insertAdjacentHTML('beforeend', '<div id="toast" role="status"></div>'); t = $('#toast'); }
+        t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm font-semibold text-white ' + (bad ? 'bg-rose-600' : 'bg-emerald-600');
+        t.textContent = msg; if (window.applyI18nAll) window.applyI18nAll();
+        clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hidden'), 3500);
+    }
+    const tr = () => { if (window.applyI18nAll) window.applyI18nAll(); };
+
+    // ===== KIRISH =====
+    function showAuth(msg) {
+        host().innerHTML = `<div class="max-w-sm mx-auto py-8">
+            <h1 class="fd text-2xl font-bold">Menejer paneli</h1>
+            <p class="text-sm ${muted} mt-2 mb-6">Bosh egasi, menejer yoki admin tayinlagan email bilan kiring.</p>
+            <form onsubmit="mAuth(event)" class="space-y-4">
+                <div class="flex gap-2 p-1 bg-slate-200 dark:bg-gray-700 rounded-lg">
+                    <button type="button" id="m-t-login" onclick="mSetMode('login')" class="flex-1 tbtn">Kirish</button>
+                    <button type="button" id="m-t-reg" onclick="mSetMode('register')" class="flex-1 tbtn">Akkaunt yaratish</button>
+                </div>
+                <div><label class="text-sm font-semibold" for="m-email">Email</label><input id="m-email" type="email" required class="tinp mt-1" autocomplete="email"></div>
+                <div><label class="text-sm font-semibold" for="m-pass">Parol</label><input id="m-pass" type="password" required minlength="6" class="tinp mt-1" autocomplete="current-password"></div>
+                <p id="m-err" class="text-sm text-rose-600 dark:text-rose-400 min-h-[1.25rem]" role="alert">${esc(msg || '')}</p>
+                <button id="m-go" class="tbtn tbp w-full py-3">Kirish</button>
+                <button type="button" onclick="mForgot()" class="text-sm text-violet-700 dark:text-violet-400 font-semibold">Parolni unutdim</button>
+                <p id="m-hint" class="hidden text-xs ${muted}">Akkaunt yaratish faqat tayinlangan xodimlar uchun: avval menejer yoki bosh egasi emailingizni "Xodimlar" ro'yxatiga qo'shishi kerak.</p>
+            </form></div>`;
+        mSetMode(mode); tr();
+    }
+    function mSetMode(m) {
+        mode = m;
+        const reg = m === 'register';
+        $('#m-go').textContent = reg ? 'Akkaunt yaratish' : 'Kirish';
+        $('#m-pass').autocomplete = reg ? 'new-password' : 'current-password';
+        $('#m-t-login').className = 'flex-1 tbtn ' + (!reg ? 'bg-white dark:bg-gray-800 shadow' : '');
+        $('#m-t-reg').className = 'flex-1 tbtn ' + (reg ? 'bg-white dark:bg-gray-800 shadow' : '');
+        $('#m-hint').classList.toggle('hidden', !reg);
+        $('#m-err').textContent = ''; tr();
+    }
+    async function mAuth(e) {
+        e.preventDefault(); $('#m-err').textContent = '';
+        const em = $('#m-email').value.trim(), pw = $('#m-pass').value;
+        try {
+            if (mode === 'register') await auth.createUserWithEmailAndPassword(em, pw);
+            else await auth.signInWithEmailAndPassword(em, pw);
+        } catch (x) { $('#m-err').textContent = ERR[x.code] || x.message; tr(); }
+    }
+    async function mForgot() {
+        const em = $('#m-email').value.trim();
+        if (!em) { $('#m-err').textContent = 'Avval email manzilingizni kiriting.'; tr(); return; }
+        try { await auth.sendPasswordResetEmail(em); toast('Parolni tiklash havolasi emailga yuborildi.'); }
+        catch (x) { $('#m-err').textContent = ERR[x.code] || x.message; tr(); }
+    }
+    function stopWatch() { unsubs.forEach(u => { try { u(); } catch (e) { } }); unsubs = []; }
+
+    async function onAuth(u) {
+        authReady = false; stopWatch(); me = u; role = null;
+        if (!u) { authReady = true; showAuth(); return; }
+        host().innerHTML = `<p class="py-16 text-center ${muted}">Yuklanmoqda...</p>`; tr();
+        const em = lc(u.email);
+        if (em === OWNER_EMAIL) { role = 'owner'; myName = 'Bosh egasi'; }
+        else {
+            try {
+                const d = await db.collection('staff').doc(em).get();
+                if (d.exists && ['manager', 'admin'].includes(d.data().role)) { role = d.data().role; myName = d.data().name || em; }
+            } catch (x) { console.warn('staff:', x && x.message); }
+        }
+        authReady = true;
+        if (role === 'owner' || role === 'manager') { startWatch(); shell(); render(); }
+        else showNoAccess();
+    }
+    function showNoAccess() {
+        const adm = role === 'admin';
+        host().innerHTML = `<div class="max-w-md mx-auto py-12 text-center">
+            <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${adm ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-rose-100 dark:bg-rose-900/40'}"><i class="fa-solid ${adm ? 'fa-user-shield text-amber-600' : 'fa-lock text-rose-600'} text-3xl"></i></div>
+            <h1 class="fd text-2xl font-bold mt-5">${adm ? 'Siz adminsiz' : "Menejer huquqi yo'q"}</h1>
+            <p class="${muted} mt-3"><span translate="no">${esc(me.email)}</span></p>
+            <p class="${muted} mt-2">${adm ? "Menejer paneli faqat menejerlar uchun. Admin panelidan foydalaning." : "Bu email xodimlar ro'yxatida yo'q. Menejer yoki bosh egasi sizni qo'shishi kerak."}</p>
+            <div class="flex justify-center gap-2 mt-6">${adm ? '<a href="admin.html" class="tbtn tbp">Admin paneli</a>' : ''}<button onclick="mOut()" class="tbtn tbg">Chiqish</button></div></div>`;
+        tr();
+    }
+    const mOut = () => auth.signOut();
+
+    // ===== MA'LUMOTLAR (jonli) =====
+    function startWatch() {
+        const keep = (name, fn) => db.collection(name).onSnapshot(fn, x => toast(name + ": " + fsErr(x), true));
+        unsubs.push(keep('users', s => { users = s.docs.map(d => ({ _id: d.id, ...d.data() })).filter(u => u && u.email).sort((a, b) => (b.registeredAt || '').localeCompare(a.registeredAt || '')); if (tab === 'students') renderBody(); }));
+        unsubs.push(keep('points', s => { points = {}; s.forEach(d => { points[d.id] = +d.data().balance || 0; }); if (tab === 'students') renderBody(); }));
+        unsubs.push(keep('teachers', s => { teachers = s.docs.map(d => ({ _id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')); if (tab === 'teachers') renderBody(); }));
+        unsubs.push(keep('staff', s => { staff = s.docs.map(d => ({ _id: d.id, ...d.data() })).sort((a, b) => (a.role === b.role ? 0 : a.role === 'manager' ? -1 : 1) || (a.createdAt || '').localeCompare(b.createdAt || '')); if (tab === 'staff') renderBody(); }));
+    }
+
+    // ===== QOBIQ VA YO'NALISH =====
+    const TABS = [['students', 'fa-user-graduate', "O'quvchilar"], ['teachers', 'fa-chalkboard-user', 'Ustozlar'], ['staff', 'fa-user-shield', 'Xodimlar']];
+    function shell() {
+        host().innerHTML = `<nav class="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-gray-200 dark:border-gray-800">
+            ${TABS.map(([k, ic, l]) => `<a class="tnavb" data-v="${k}" href="#/${k}"><i class="fa-solid ${ic}"></i>${l}</a>`).join('')}
+            <span class="ml-auto flex items-center gap-2 text-sm ${muted} min-w-0"><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE[role][1]}">${ROLE[role][0]}</span><span translate="no" class="truncate max-w-[14rem]">${esc(me.email)}</span></span>
+            <button onclick="mOut()" class="tbtn tbg">Chiqish</button></nav><div id="m-main"></div>`;
+    }
+    function route() {
+        const t = location.hash.replace(/^#\/?/, '').split('/')[0];
+        tab = TABS.some(x => x[0] === t) ? t : 'students';
+        q = ''; ptsClose();
+        if (role === 'owner' || role === 'manager') render();
+    }
+    function render() {
+        if (!$('#m-main')) shell();
+        document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
+        renderBody();
+    }
+    function renderBody() {
+        const m = $('#m-main'); if (!m) return;
+        const fx = document.activeElement && document.activeElement.id === 'm-q' ? document.activeElement.selectionStart : null;
+        m.innerHTML = tab === 'teachers' ? vTeachers() : tab === 'staff' ? vStaff() : vStudents();
+        if (fx !== null && $('#m-q')) { const i = $('#m-q'); i.focus(); try { i.setSelectionRange(fx, fx); } catch (e) { } }
+        tr();
+    }
+    const match = (...xs) => { const s = q.trim().toLowerCase(); return !s || xs.some(x => String(x || '').toLowerCase().includes(s)); };
+    function toolbar(count, placeholder, delLabel) {
+        return `<div class="flex flex-wrap items-center gap-3 mb-4">
+            <input id="m-q" value="${esc(q)}" oninput="mQ(this.value)" class="tinp flex-1 min-w-[14rem] max-w-md" placeholder="${placeholder}" autocomplete="off">
+            ${delLabel ? `<label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" ${showDeleted ? 'checked' : ''} onchange="mDel(this.checked)" class="w-4 h-4"><span>${delLabel}</span></label>` : ''}
+            <span class="ml-auto text-sm ${muted}"><span>Jami:</span> <b>${count}</b></span></div>`;
+    }
+    function mQ(v) { q = v; renderBody(); }
+    function mDel(v) { showDeleted = v; renderBody(); }
+
+    // ===== O'QUVCHILAR =====
+    function vStudents() {
+        const list = users.filter(u => (showDeleted ? u.deleted : !u.deleted) && match(u.name, u.email));
+        const head = `<h1 class="fd text-2xl font-bold mb-5">O'quvchilar</h1>` + toolbar(list.length, "Ism yoki email bo'yicha qidiring", "O'chirilganlar");
+        if (!list.length) return head + `<p class="${muted}">${showDeleted ? "O'chirilgan o'quvchi yo'q." : "O'quvchi topilmadi."}</p>`;
+        return head + `<ul class="space-y-2">${list.map(u => {
+            const bal = points[pkey(u.email)] || 0;
+            return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3 ${u.deleted ? 'opacity-70' : ''}">
+                <span class="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold shrink-0">${esc(String(u.name || u.email).charAt(0).toUpperCase())}</span>
+                <div class="flex-1 min-w-[10rem]"><div translate="no" class="font-semibold truncate">${esc(u.name || '-')}${u.isPro ? ' <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-400 text-gray-900 align-middle">PRO</span>' : ''}</div>
+                    <div class="text-xs ${muted} truncate"><span translate="no">${esc(u.email)}</span> · <span>${dt(u.registeredAt)}</span></div></div>
+                <div class="text-lg font-bold min-w-[4.5rem] text-right"><i class="fa-solid fa-coins text-amber-500 mr-1"></i>${bal}</div>
+                <div class="flex gap-1.5">${u.deleted
+                    ? `<button onclick="mStudentDel('${esc(u._id)}',false)" class="tbtn tbg"><i class="fa-solid fa-rotate-left mr-1"></i>Tiklash</button>`
+                    : `<button onclick="mPts('${esc(u._id)}',1)" class="tbtn bg-emerald-600 text-white" aria-label="Ball qo'shish"><i class="fa-solid fa-plus"></i></button>
+                       <button onclick="mPts('${esc(u._id)}',-1)" class="tbtn bg-rose-600 text-white" aria-label="Ball ayirish"><i class="fa-solid fa-minus"></i></button>
+                       <button onclick="mStudentDel('${esc(u._id)}',true)" class="tbtn tbg text-rose-600" aria-label="O'chirish"><i class="fa-solid fa-trash"></i></button>`}</div></li>`;
+        }).join('')}</ul>`;
+    }
+    async function mStudentDel(id, del) {
+        const u = users.find(x => x._id === id); if (!u) return;
+        if (del && !confirm(`"${u.name || u.email}" o'quvchi akkauntini o'chirasizmi? U saytga kira olmaydi. Ballari saqlanib qoladi, keyin tiklash mumkin.`)) return;
+        try { await db.collection('users').doc(id).update({ deleted: del }); toast(del ? "O'quvchi o'chirildi." : "O'quvchi tiklandi."); }
+        catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+    }
+
+    // --- Ball modal oynasi (1-qator miqdor, 2-qator izoh) ---
+    function mPts(id, sign) {
+        const u = users.find(x => x._id === id); if (!u) return;
+        ptsClose(); ptsCtx = { u, sign };
+        const add = sign > 0, bal = points[pkey(u.email)] || 0;
+        document.body.insertAdjacentHTML('beforeend', `
+        <div id="pts-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onmousedown="if(event.target===this)mPtsClose()">
+            <form novalidate onsubmit="mPtsGo(event)" role="dialog" aria-modal="true" aria-labelledby="pts-title"
+                class="bg-white dark:bg-gray-800 text-slate-800 dark:text-gray-100 rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-slate-200 dark:border-gray-700">
+                <div class="flex items-start gap-3 mb-5">
+                    <span class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${add ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/40 text-rose-600'}"><i class="fa-solid ${add ? 'fa-plus' : 'fa-minus'}"></i></span>
+                    <div class="min-w-0"><h2 id="pts-title" class="fd text-lg font-bold leading-tight">${add ? "Ball qo'shish" : 'Ball ayirish'}</h2>
+                    <p class="text-sm ${muted} mt-1 truncate"><span translate="no">${esc(u.name || u.email)}</span> · <span>hozir</span> <b>${bal}</b> <span>ball</span></p></div>
+                </div>
+                <label for="pts-amt" class="text-sm font-semibold">Necha ball</label>
+                <input id="pts-amt" type="number" inputmode="numeric" min="1" max="10000" step="1" required value="10" class="tinp mt-1 text-lg font-bold">
+                <div class="flex flex-wrap gap-1.5 mt-2">${[5, 10, 50, 100, 500].map(n => `<button type="button" onclick="document.getElementById('pts-amt').value=${n}" class="tbtn tbg !px-3 !py-1">${n}</button>`).join('')}</div>
+                <label for="pts-reason" class="text-sm font-semibold block mt-4">Nima uchun (izoh)</label>
+                <input id="pts-reason" maxlength="100" class="tinp mt-1" placeholder="Masalan: olimpiadada g'olib bo'ldi" autocomplete="off">
+                <p id="pts-err" class="text-sm text-rose-600 dark:text-rose-400 min-h-[1.25rem] mt-2" role="alert"></p>
+                <div class="flex justify-end gap-2 mt-2">
+                    <button type="button" onclick="mPtsClose()" class="tbtn tbg">Bekor qilish</button>
+                    <button id="pts-go" class="tbtn text-white ${add ? 'bg-emerald-600' : 'bg-rose-600'}">${add ? "Qo'shish" : 'Ayirish'}</button>
+                </div>
+            </form></div>`);
+        tr(); const a = $('#pts-amt'); a.focus(); a.select();
+        document.addEventListener('keydown', ptsKey);
+    }
+    function ptsKey(e) { if (e.key === 'Escape') ptsClose(); }
+    function ptsClose() { document.removeEventListener('keydown', ptsKey); const m = $('#pts-modal'); if (m) m.remove(); ptsCtx = null; }
+    async function mPtsGo(e) {
+        e.preventDefault();
+        const ctx = ptsCtx; if (!ctx || busy) return;
+        const amt = parseInt($('#pts-amt').value, 10), reason = $('#pts-reason').value.trim().slice(0, 100);
+        const err = $('#pts-err'), btn = $('#pts-go');
+        if (!(amt >= 1 && amt <= 10000)) { err.textContent = "1 dan 10000 gacha son kiriting."; tr(); return; }
+        busy = true; btn.disabled = true; btn.classList.add('opacity-60');
+        const u = ctx.u, key = pkey(u.email), ref = db.collection('points').doc(key), logRef = db.collection('pointLog').doc(), now = new Date().toISOString();
+        try {
+            let real = 0;
+            await db.runTransaction(async t => {
+                const d = await t.get(ref), cur = d.exists ? (+d.data().balance || 0) : 0, nb = Math.max(0, cur + ctx.sign * amt);
+                real = nb - cur; if (!real) return;
+                t.set(ref, { email: u.email.trim(), name: u.name || '', balance: nb, updatedAt: now });
+                t.set(logRef, { key, email: u.email.trim(), name: u.name || '', delta: real, reason, groupId: '', groupName: 'Menejer', teacherUid: me.uid, teacherName: myName, createdAt: now });
+            });
+            if (!real) { err.textContent = "Ball 0 dan kam bo'lmaydi."; tr(); btn.disabled = false; btn.classList.remove('opacity-60'); busy = false; return; }
+            ptsClose(); toast(ctx.sign > 0 ? "Ball qo'shildi." : 'Ball ayirildi.');
+        } catch (x) { if ($('#pts-err')) { err.textContent = 'Saqlanmadi. ' + fsErr(x); tr(); btn.disabled = false; btn.classList.remove('opacity-60'); } }
+        busy = false;
+    }
+
+    // ===== USTOZLAR =====
+    const TST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'], rejected: ['Rad etilgan', 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300'], deleted: ["O'chirilgan", 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'] };
+    function vTeachers() {
+        const list = teachers.filter(t => (showDeleted ? t.approval === 'deleted' : t.approval !== 'deleted') && match(t.name, t.email, t.specialty));
+        const head = `<h1 class="fd text-2xl font-bold mb-5">Ustozlar</h1>` + toolbar(list.length, "Ism, email yoki yo'nalish bo'yicha qidiring", "O'chirilganlar");
+        if (!list.length) return head + `<p class="${muted}">${showDeleted ? "O'chirilgan ustoz yo'q." : 'Ustoz topilmadi.'}</p>`;
+        return head + `<ul class="space-y-2">${list.map(t => {
+            const s = TST[t.approval || 'pending'] || TST.pending;
+            return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                <div class="flex-1 min-w-[12rem]"><div class="flex flex-wrap items-center gap-2"><span translate="no" class="font-semibold">${esc(t.name || '-')}</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${s[1]}">${s[0]}</span></div>
+                    <div class="text-xs ${muted}"><span translate="no">${esc(t.email || '')}</span>${t.specialty ? ` · <span>${esc(t.specialty)}</span>` : ''} · <span>${dt(t.createdAt)}</span></div></div>
+                ${t.approval === 'deleted'
+                    ? `<button onclick="mTeacherDel('${esc(t._id)}',false)" class="tbtn tbg"><i class="fa-solid fa-rotate-left mr-1"></i>Tiklash</button>`
+                    : `<button onclick="mTeacherDel('${esc(t._id)}',true)" class="tbtn tbg text-rose-600"><i class="fa-solid fa-trash mr-1"></i>O'chirish</button>`}</li>`;
+        }).join('')}</ul><p class="text-xs ${muted} mt-4">O'chirilgan ustoz ustozlar saytida hech narsa qila olmaydi. Uning kurslari va o'quvchilarining ballari saqlanib qoladi.</p>`;
+    }
+    async function mTeacherDel(id, del) {
+        const t = teachers.find(x => x._id === id); if (!t) return;
+        if (del && !confirm(`"${t.name || t.email}" ustoz akkauntini o'chirasizmi? U kurs yarata olmaydi, ball bera olmaydi va davomat qila olmaydi. Keyin tiklash mumkin.`)) return;
+        if (!del && !confirm(`"${t.name || t.email}" ni tiklaysizmi? U tasdiqlangan ustoz bo'ladi.`)) return;
+        try {
+            await db.collection('teachers').doc(id).update(del ? { approval: 'deleted', approvalReason: "Akkaunt menejer tomonidan o'chirildi." } : { approval: 'approved', approvalReason: '' });
+            toast(del ? "Ustoz o'chirildi." : 'Ustoz tiklandi.');
+        } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+    }
+
+    // ===== XODIMLAR (adminlar va menejerlar) =====
+    const canDelete = s => role === 'owner' || (role === 'manager' && s.role === 'admin');
+    function vStaff() {
+        const list = staff.filter(s => match(s.name, s.email));
+        const roleOpts = role === 'owner' ? `<option value="admin">Admin</option><option value="manager">Menejer</option>` : `<option value="admin">Admin</option>`;
+        const ownerRow = match('Bosh egasi', OWNER_EMAIL) ? `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                <div class="flex-1 min-w-[12rem]"><div class="flex items-center gap-2"><span class="font-semibold">Bosh egasi</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${ROLE.owner[1]}">${ROLE.owner[0]}</span></div>
+                <div class="text-xs ${muted}"><span translate="no">${OWNER_EMAIL}</span></div></div>
+                <span class="text-xs ${muted}">O'chirib bo'lmaydi</span></li>` : '';
+        return `<h1 class="fd text-2xl font-bold mb-5">Xodimlar</h1>
+            <form onsubmit="mStaffAdd(event)" class="${card} p-4 mb-6 grid sm:grid-cols-[1fr_1fr_10rem_auto] gap-3 items-end">
+                <div><label class="text-sm font-semibold" for="s-email">Email</label><input id="s-email" type="email" required class="tinp mt-1" placeholder="admin@gmail.com" autocomplete="off"></div>
+                <div><label class="text-sm font-semibold" for="s-name">Ism</label><input id="s-name" maxlength="60" class="tinp mt-1" autocomplete="off"></div>
+                <div><label class="text-sm font-semibold" for="s-role">Rol</label><select id="s-role" class="tinp mt-1">${roleOpts}</select></div>
+                <button class="tbtn tbp"><i class="fa-solid fa-plus mr-1"></i>Qo'shish</button>
+            </form>
+            ${toolbar(list.length + (ownerRow ? 1 : 0), "Ism yoki email bo'yicha qidiring", '')}
+            <ul class="space-y-2">${ownerRow}${list.map(s => {
+                const r = ROLE[s.role] || ROLE.admin, self = lc(s.email) === lc(me.email);
+                return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
+                    <div class="flex-1 min-w-[12rem]"><div class="flex flex-wrap items-center gap-2"><span translate="no" class="font-semibold">${esc(s.name || s.email)}</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${r[1]}">${r[0]}</span>${self ? `<span class="text-xs ${muted}">(siz)</span>` : ''}</div>
+                    <div class="text-xs ${muted}"><span translate="no">${esc(s.email)}</span> · <span>qo'shgan:</span> <span translate="no">${esc(s.addedBy || '-')}</span> · <span>${dt(s.createdAt)}</span></div></div>
+                    ${canDelete(s) && !self ? `<button onclick="mStaffDel('${esc(s._id)}')" class="tbtn tbg text-rose-600"><i class="fa-solid fa-trash mr-1"></i>O'chirish</button>` : ''}</li>`;
+            }).join('')}</ul>
+            <div class="text-xs ${muted} mt-5 space-y-1">
+                <p>Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi. Menejer bundan tashqari o'quvchilarga ball beradi, akkauntlarni o'chiradi va adminlarni qo'shadi.</p>
+                <p>Yangi xodim shu sahifadagi "Akkaunt yaratish" orqali o'sha email bilan parol o'rnatadi.</p>
+            </div>`;
+    }
+    async function mStaffAdd(e) {
+        e.preventDefault();
+        const em = lc($('#s-email').value), name = $('#s-name').value.trim().slice(0, 60), r = $('#s-role').value;
+        if (!/^[^\s@/]+@[^\s@/]+\.[^\s@/]{2,}$/.test(em)) { toast("Email manzili noto'g'ri.", true); return; }
+        if (em === OWNER_EMAIL) { toast('Bu bosh egasining emaili.', true); return; }
+        const ex = staff.find(s => lc(s.email) === em);
+        if (ex) { toast("Bu email allaqachon xodimlar ro'yxatida.", true); return; }
+        if (r === 'manager' && role !== 'owner') { toast("Menejerni faqat bosh egasi tayinlaydi.", true); return; }
+        try {
+            await db.collection('staff').doc(em).set({ email: em, name, role: r, addedBy: lc(me.email), createdAt: new Date().toISOString() });
+            toast(r === 'manager' ? "Menejer qo'shildi." : "Admin qo'shildi."); e.target.reset();
+        } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
+    }
+    async function mStaffDel(id) {
+        const s = staff.find(x => x._id === id); if (!s || !canDelete(s)) return;
+        if (!confirm(`"${s.name || s.email}" (${(ROLE[s.role] || ROLE.admin)[0]}) ni xodimlardan o'chirasizmi? U admin huquqlarini yo'qotadi.`)) return;
+        try { await db.collection('staff').doc(id).delete(); toast("Xodim o'chirildi."); }
+        catch (x) { toast("O'chirilmadi. " + fsErr(x), true); }
+    }
+
+    Object.assign(window, { mAuth, mSetMode, mForgot, mOut, mQ, mDel, mStudentDel, mPts, mPtsGo, mPtsClose: ptsClose, mTeacherDel, mStaffAdd, mStaffDel });
+    window.addEventListener('hashchange', route);
+    window.managerStart = function () {
+        fbApp = firebase.initializeApp(FIREBASE_CONFIG, 'manager');
+        auth = fbApp.auth(); db = fbApp.firestore();
+        const t = location.hash.replace(/^#\/?/, '').split('/')[0];
+        if (TABS.some(x => x[0] === t)) tab = t;
+        host().innerHTML = `<p class="py-16 text-center ${muted}">Yuklanmoqda...</p>`;
+        auth.onAuthStateChanged(onAuth);
+    };
+})();
+
+    </script>
+    <script>
+
+/* ===== EduFlow: to'liq til qatlami (uz / en / ru) =====
+           Mavjud i18n lug'atiga tegmaydi; qolgan barcha matnlarni (modal, admin, profil,
+           kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
+(function () {
+    const D = [
+        ["Menejer", "Manager", "Менеджер"],
+        ["Menejer paneli", "Manager panel", "Панель менеджера"],
+        ["Bosh egasi, menejer yoki admin tayinlagan email bilan kiring.", "Log in with the email the owner, a manager or an admin assigned to you.", "Войдите с email, назначенным владельцем, менеджером или администратором."],
+        ["Email", "Email", "Email"],
+        ["Parol", "Password", "Пароль"],
+        ["Akkaunt yaratish faqat tayinlangan xodimlar uchun: avval menejer yoki bosh egasi emailingizni \"Xodimlar\" ro'yxatiga qo'shishi kerak.", "Account creation is only for assigned staff: a manager or the owner must first add your email to the Staff list.", "Создание аккаунта только для назначенных сотрудников: менеджер или владелец сначала должен добавить ваш email в список «Сотрудники»."],
+        ["Siz adminsiz", "You are an admin", "Вы администратор"],
+        ["Menejer huquqi yo'q", "No manager access", "Нет прав менеджера"],
+        ["Menejer paneli faqat menejerlar uchun. Admin panelidan foydalaning.", "The manager panel is for managers only. Use the admin panel.", "Панель менеджера только для менеджеров. Используйте панель администратора."],
+        ["Bu email xodimlar ro'yxatida yo'q. Menejer yoki bosh egasi sizni qo'shishi kerak.", "This email isn't on the staff list. A manager or the owner needs to add you.", "Этого email нет в списке сотрудников. Вас должен добавить менеджер или владелец."],
+        ["Admin paneli", "Admin panel", "Панель администратора"],
+        ["O'quvchilar", "Students", "Ученики"],
+        ["Xodimlar", "Staff", "Сотрудники"],
+        ["Bosh egasi", "Owner", "Владелец"],
+        ["Admin", "Admin", "Администратор"],
+        ["Jami:", "Total:", "Всего:"],
+        ["O'chirilganlar", "Deleted", "Удалённые"],
+        ["Ism, email yoki yo'nalish bo'yicha qidiring", "Search by name, email or field", "Поиск по имени, email или направлению"],
+        ["O'chirilgan o'quvchi yo'q.", "No deleted students.", "Удалённых учеников нет."],
+        ["Tiklash", "Restore", "Восстановить"],
+        ["O'chirish", "Delete", "Удалить"],
+        ["O'quvchi o'chirildi.", "Student deleted.", "Ученик удалён."],
+        ["O'quvchi tiklandi.", "Student restored.", "Ученик восстановлен."],
+        ["Masalan: olimpiadada g'olib bo'ldi", "For example: won the olympiad", "Например: победил в олимпиаде"],
+        ["1 dan 10000 gacha son kiriting.", "Enter a number from 1 to 10000.", "Введите число от 1 до 10000."],
+        ["Kutmoqda", "Pending", "Ожидает"],
+        ["O'chirilgan", "Deleted", "Удалён"],
+        ["O'chirilgan ustoz yo'q.", "No deleted teachers.", "Удалённых преподавателей нет."],
+        ["Ustoz topilmadi.", "No teacher found.", "Преподаватель не найден."],
+        ["O'chirilgan ustoz ustozlar saytida hech narsa qila olmaydi. Uning kurslari va o'quvchilarining ballari saqlanib qoladi.", "A deleted teacher can't do anything on the teacher site. Their courses and students' points are kept.", "Удалённый преподаватель ничего не может делать на сайте преподавателей. Его курсы и баллы учеников сохраняются."],
+        ["Ustoz o'chirildi.", "Teacher deleted.", "Преподаватель удалён."],
+        ["Ustoz tiklandi.", "Teacher restored.", "Преподаватель восстановлен."],
+        ["Rol", "Role", "Роль"],
+        ["O'chirib bo'lmaydi", "Can't be deleted", "Нельзя удалить"],
+        ["(siz)", "(you)", "(вы)"],
+        ["qo'shgan:", "added by:", "добавил:"],
+        ["Admin admin panelida (admin.html) ustozlarni, kurslarni, sharhlarni va Edu-Shop buyurtmalarini boshqaradi. Menejer bundan tashqari o'quvchilarga ball beradi, akkauntlarni o'chiradi va adminlarni qo'shadi.", "Admins manage teachers, courses, comments and Edu-Shop orders in the admin panel (admin.html). Managers can also give students points, delete accounts and add admins.", "Администратор управляет преподавателями, курсами, отзывами и заказами Edu-Shop в панели (admin.html). Менеджер также начисляет баллы, удаляет аккаунты и добавляет администраторов."],
+        ["Yangi xodim shu sahifadagi \"Akkaunt yaratish\" orqali o'sha email bilan parol o'rnatadi.", "A new staff member sets a password for that email via \"Create account\" on this page.", "Новый сотрудник задаёт пароль для этого email через «Создать аккаунт» на этой странице."],
+        ["Email manzili noto'g'ri.", "Invalid email address.", "Неверный email."],
+        ["Bu bosh egasining emaili.", "This is the owner's email.", "Это email владельца."],
+        ["Bu email allaqachon xodimlar ro'yxatida.", "This email is already on the staff list.", "Этот email уже в списке сотрудников."],
+        ["Menejerni faqat bosh egasi tayinlaydi.", "Only the owner can assign managers.", "Назначать менеджеров может только владелец."],
+        ["Menejer qo'shildi.", "Manager added.", "Менеджер добавлен."],
+        ["Admin qo'shildi.", "Admin added.", "Администратор добавлен."],
+        ["Xodim o'chirildi.", "Staff member removed.", "Сотрудник удалён."],
+        ["Ruxsat yo'q: Firestore Rules'ni yangilang (firestore.rules).", "Access denied: update Firestore Rules (firestore.rules).", "Нет доступа: обновите Firestore Rules (firestore.rules)."],
+        ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],
+        ["Ball qo'shish", "Add points", "Начислить баллы"],
+        ["Ball ayirish", "Deduct points", "Списать баллы"],
+        ["Necha ball", "How many points", "Сколько баллов"],
+        ["Nima uchun (izoh)", "What for (comment)", "За что (комментарий)"],
+        ["Bekor qilish", "Cancel", "Отмена"],
+        ["Ayirish", "Deduct", "Списать"],
+        ["ta o'quvchiga", "students", "ученикам"],
+        ["hozir", "now", "сейчас"],
+        ["ball", "points", "баллов"],
+        ["1 dan 1000 gacha son kiriting.", "Enter a number from 1 to 1000.", "Введите число от 1 до 1000."],
+        ["Akkauntingiz tasdiqlanishini kutmoqda", "Your account is awaiting approval", "Ваш аккаунт ожидает подтверждения"],
+        ["Akkauntingiz tasdiqlanmadi", "Your account was not approved", "Ваш аккаунт не одобрен"],
+        ["Admin ustoz akkauntingizni tasdiqlamadi. Savollar bo'lsa, EduFlow bilan bog'laning.", "The admin did not approve your teacher account. Contact EduFlow if you have questions.", "Администратор не одобрил ваш аккаунт преподавателя. Если есть вопросы, свяжитесь с EduFlow."],
+        ["Kurs yaratish, guruhlar, ball berish va davomat admin akkauntingizni tasdiqlagandan keyin ochiladi. Tasdiqlansa, bu sahifa o'zi yangilanadi.", "Creating courses, groups, points and attendance open once the admin approves your account. This page updates by itself when that happens.", "Создание курсов, группы, баллы и посещаемость откроются после того, как администратор одобрит ваш аккаунт. Страница обновится сама."],
+        ["Admin sizni tezroq tanishi uchun profilingizni to'ldiring.", "Complete your profile so the admin can review you faster.", "Заполните профиль, чтобы администратор быстрее вас проверил."],
+        ["Profilni to'ldirish", "Complete profile", "Заполнить профиль"],
+        ["Sabab:", "Reason:", "Причина:"],
+        ["Guruhlar", "Groups", "Группы"],
+        ["Guruh yaratish", "Create group", "Создать группу"],
+        ["Guruh nomi", "Group name", "Название группы"],
+        ["Hali guruh yo'q.", "No groups yet.", "Пока нет групп."],
+        ["Guruh yarating, unga o'quvchilarni qo'shing, ball bering va davomat qiling.", "Create a group, add students, give points and take attendance.", "Создайте группу, добавьте учеников, начисляйте баллы и отмечайте посещаемость."],
+        ["o'quvchi", "students", "учеников"],
+        ["O'quvchilar va ballar", "Students and points", "Ученики и баллы"],
+        ["Davomat", "Attendance", "Посещаемость"],
+        ["Tarix", "History", "История"],
+        ["Ball miqdori", "Points", "Баллы"],
+        ["Sabab (ixtiyoriy)", "Reason (optional)", "Причина (необязательно)"],
+        ["Masalan: darsda faol qatnashdi", "For example: was active in class", "Например: активно работал на уроке"],
+        ["Hammasiga qo'shish", "Add to everyone", "Добавить всем"],
+        ["O'quvchi qo'shish", "Add a student", "Добавить ученика"],
+        ["Ism yoki email bo'yicha qidiring", "Search by name or email", "Поиск по имени или email"],
+        ["Kamida 2 ta harf yozing. Faqat saytda ro'yxatdan o'tgan o'quvchilar chiqadi.", "Type at least 2 characters. Only students registered on the site are shown.", "Введите минимум 2 символа. Показаны только ученики, зарегистрированные на сайте."],
+        ["O'quvchi topilmadi.", "No student found.", "Ученик не найден."],
+        ["Qo'shish", "Add", "Добавить"],
+        ["Guruhda o'quvchi yo'q. Pastdan qidirib qo'shing.", "No students in this group yet. Search below to add them.", "В группе нет учеников. Найдите и добавьте их ниже."],
+        ["Ball qo'shildi.", "Points added.", "Баллы добавлены."],
+        ["Ball ayirildi.", "Points deducted.", "Баллы списаны."],
+        ["Ball 0 dan kam bo'lmaydi.", "Points can't go below 0.", "Баллы не могут быть меньше 0."],
+        ["O'quvchi qo'shildi.", "Student added.", "Ученик добавлен."],
+        ["Guruh yaratildi.", "Group created.", "Группа создана."],
+        ["Guruh o'chirildi.", "Group deleted.", "Группа удалена."],
+        ["Guruhda ko'pi bilan 100 ta o'quvchi bo'ladi.", "A group can have at most 100 students.", "В группе может быть не больше 100 учеников."],
+        ["O'quvchini guruhdan chiqarasizmi? Uning ballari saqlanib qoladi.", "Remove this student from the group? Their points are kept.", "Убрать ученика из группы? Его баллы сохранятся."],
+        ["Guruhdagi hamma o'quvchiga ko'rsatilgan miqdorda ball qo'shilsinmi?", "Add this many points to every student in the group?", "Начислить указанные баллы каждому ученику группы?"],
+        ["Guruhni o'chirasizmi? Davomat yozuvlari ham o'chadi, o'quvchilarning ballari saqlanib qoladi.", "Delete this group? Its attendance records are deleted too; students' points are kept.", "Удалить группу? Записи посещаемости тоже удалятся, баллы учеников сохранятся."],
+        ["Guruh topilmadi.", "Group not found.", "Группа не найдена."],
+        ["Hammasi keldi", "Everyone present", "Все пришли"],
+        ["Keldi", "Present", "Пришёл"],
+        ["Kechikdi", "Late", "Опоздал"],
+        ["Sababli", "Excused", "Уважительная"],
+        ["Kelmadi", "Absent", "Не пришёл"],
+        ["Davomatni saqlash", "Save attendance", "Сохранить посещаемость"],
+        ["Bu sana uchun davomat saqlangan.", "Attendance for this date is saved.", "Посещаемость на эту дату сохранена."],
+        ["Davomat uchun avval guruhga o'quvchi qo'shing.", "Add students to the group before taking attendance.", "Сначала добавьте учеников в группу."],
+        ["Davomat saqlandi.", "Attendance saved.", "Посещаемость сохранена."],
+        ["Hech kimga belgi qo'yilmadi.", "No one is marked.", "Никто не отмечен."],
+        ["Hisobot", "Report", "Отчёт"],
+        ["Belgilangan kunlar:", "Days marked:", "Отмечено дней:"],
+        ["O'quvchi", "Student", "Ученик"],
+        ["Davomat foizida kechikkanlar ham kelgan deb hisoblanadi.", "Late students count as present in the attendance percentage.", "В проценте посещаемости опоздавшие считаются пришедшими."],
+        ["Hali ball o'zgarishi yo'q.", "No point changes yet.", "Изменений баллов пока нет."],
+        ["Rad etish sababi:", "Rejection reason:", "Причина отклонения:"],
+        ["EduFlow saytiga qaytish", "Back to EduFlow", "Вернуться на EduFlow"],
+        ["Ustozlar", "Teachers", "Преподаватели"],
+        ["Ruxsat yo'q: Firestore Rules'ga ustozlar qoidalarini qo'shing (README.md, \"Ustozlar sayti: sozlash\").", "Access denied: add the teacher rules to Firestore Rules (README.md, \"Ustozlar sayti: sozlash\").", "Нет доступа: добавьте правила для преподавателей в Firestore Rules (README.md, «Ustozlar sayti: sozlash»)."],
+        ["Yuklanmoqda...", "Loading...", "Загрузка..."],
+        ["Ustozlar uchun", "For teachers", "Преподавателям"],
+        ["Bilimingizni kursga aylantiring", "Turn your knowledge into a course", "Превратите знания в курс"],
+        ["Kursingizni shu yerda tayyorlang va tekshiruvga yuboring.", "Prepare your course here and send it for review.", "Подготовьте курс здесь и отправьте на проверку."],
+        ["Ro'yxatdan o'tish", "Sign up", "Регистрация"],
+        ["Ism va familiya", "Full name", "Имя и фамилия"],
+        ["Emailga kelgan kod", "Code sent to your email", "Код из письма"],
+        ["Kod yuborish", "Send code", "Отправить код"],
+        ["Parolni unutdim", "Forgot password", "Забыли пароль"],
+        ["Boshqaruv", "Dashboard", "Панель"],
+        ["Kurslarim", "My courses", "Мои курсы"],
+        ["Yangi kurs", "New course", "Новый курс"],
+        ["Kurs yaratish", "Create a course", "Создать курс"],
+        ["Hali kurs yo'q.", "No courses yet.", "Пока нет курсов."],
+        ["Birinchi kursingizni yarating: nom, tavsif va darslarni qo'shing.", "Create your first course: add a title, description and lessons.", "Создайте первый курс: добавьте название, описание и уроки."],
+        ["Jami kurslar", "Total courses", "Всего курсов"],
+        ["Tekshiruvda", "Under review", "На проверке"],
+        ["Tasdiqlangan", "Approved", "Одобрен"],
+        ["Qoralama", "Draft", "Черновик"],
+        ["Rad etilgan", "Rejected", "Отклонён"],
+        ["Boshlash", "Getting started", "Начало"],
+        ["Profilni to'ldiring: yo'nalish va o'zingiz haqingizda", "Complete your profile: field and about you", "Заполните профиль: направление и о себе"],
+        ["Birinchi kursni yarating", "Create your first course", "Создайте первый курс"],
+        ["Kursga kamida 3 ta dars qo'shing", "Add at least 3 lessons to a course", "Добавьте в курс минимум 3 урока"],
+        ["Kursni tekshiruvga yuboring", "Send a course for review", "Отправьте курс на проверку"],
+        ["Tahrirlash", "Edit", "Изменить"],
+        ["Yuborish", "Submit", "Отправить"],
+        ["Kursni tahrirlash", "Edit course", "Редактирование курса"],
+        ["Kurs nomi", "Course title", "Название курса"],
+        ["Yo'nalish", "Field", "Направление"],
+        ["Daraja", "Level", "Уровень"],
+        ["Narx (so'm)", "Price (UZS)", "Цена (сум)"],
+        ["Tavsif", "Description", "Описание"],
+        ["Muqova rasmi (havola)", "Cover image (link)", "Обложка (ссылка)"],
+        ["Darslar", "Lessons", "Уроки"],
+        ["Dars qo'shish", "Add lesson", "Добавить урок"],
+        ["Dars nomi", "Lesson title", "Название урока"],
+        ["Video havolasi (YouTube...)", "Video link (YouTube...)", "Ссылка на видео (YouTube...)"],
+        ["Qoralama sifatida saqlash", "Save as draft", "Сохранить как черновик"],
+        ["Tekshiruvga yuborish", "Send for review", "Отправить на проверку"],
+        ["Talabalar ko'radigan ko'rinish", "How students will see it", "Как увидят студенты"],
+        ["Boshlang'ich", "Beginner", "Начальный"],
+        ["O'rta", "Intermediate", "Средний"],
+        ["Yuqori", "Advanced", "Продвинутый"],
+        ["Saqlash", "Save", "Сохранить"],
+        ["Tajriba (yil)", "Experience (years)", "Опыт (лет)"],
+        ["O'zingiz haqingizda", "About you", "О себе"],
+        ["Rasm (havola)", "Photo (link)", "Фото (ссылка)"],
+        ["Parolni almashtirish", "Change password", "Сменить пароль"],
+        ["Hozirgi parol", "Current password", "Текущий пароль"],
+        ["Yangi parol", "New password", "Новый пароль"],
+        ["Qoralama saqlandi.", "Draft saved.", "Черновик сохранён."],
+        ["Tekshiruvga yuborildi.", "Sent for review.", "Отправлено на проверку."],
+        ["Profil saqlandi.", "Profile saved.", "Профиль сохранён."],
+        ["Parol almashtirildi.", "Password changed.", "Пароль изменён."],
+        ["Email yoki parol noto'g'ri.", "Incorrect email or password.", "Неверный email или пароль."],
+        ["Emailga kelgan kodni to'g'ri kiriting.", "Enter the code from your email correctly.", "Введите правильный код из письма."],
+        ["Ustoz kurslari", "Teacher courses", "Курсы преподавателей"],
+        ["Tasdiqlash", "Approve", "Одобрить"],
+        ["Rad etish", "Reject", "Отклонить"],
+        ["Tekshiruvda kurs yo'q.", "No courses under review.", "Нет курсов на проверке."],
+        // [uz (kalit), en, ru, (ixtiyoriy) uz o'rniga]
+        ["Bunday akkount yo'q!", "No such account!", "Такого аккаунта нет!"],
+        ["Chiqish", "Log out", "Выйти"],
+        ["Dasturlash", "Programming", "Программирование"],
+        ["Dizayn", "Design", "Дизайн"],
+        ["Biznes", "Business", "Бизнес"],
+        ["Chet tillari", "Foreign languages", "Иностранные языки"],
+        ["SMM & Marketing", "SMM & Marketing", "SMM и маркетинг"],
+        ["© 2026 EduFlow Platformasi. Barcha huquqlar himoyalangan.", "© 2026 EduFlow Platform. All rights reserved.", "© 2026 Платформа EduFlow. Все права защищены."],
+        ["Tizimga Kirish", "Log In", "Вход"],
+        ["ISM-FAMILIYA", "FULL NAME", "ИМЯ И ФАМИЛИЯ"],
+        ["EMAIL / LOGIN", "EMAIL / LOGIN", "EMAIL / ЛОГИН"],
+        ["PAROL", "PASSWORD", "ПАРОЛЬ"],
+        ["Kirish", "Sign in", "Войти"],
+        ["Kod yuborish", "Send code", "Отправить код"],
+        ["Qayta yuborish", "Resend", "Отправить снова"],
+        ["POCHTANGIZGA KELGAN KOD", "CODE SENT TO YOUR EMAIL", "КОД, ПРИШЕДШИЙ НА ПОЧТУ"],
+        ["Email manzilini to'g'ri kiriting.", "Enter a valid email address.", "Введите корректный адрес электронной почты."],
+        ["Avval emailga kod yuboring.", "Send the code to your email first.", "Сначала отправьте код на почту."],
+        ["Kod noto'g'ri. Qaytadan urinib ko'ring.", "Incorrect code. Please try again.", "Неверный код. Попробуйте ещё раз."],
+        ["Kod muddati tugadi. Yangi kod so'rang.", "The code has expired. Request a new one.", "Срок действия кода истёк. Запросите новый."],
+        ["Urinishlar soni tugadi. Yangi kod so'rang.", "Too many attempts. Request a new code.", "Попытки закончились. Запросите новый код."],
+        ["Kod yuborilmadi. Birozdan so'ng qayta urinib ko'ring.", "The code could not be sent. Please try again in a moment.", "Не удалось отправить код. Повторите попытку чуть позже."],
+        ["Aloqa", "Contact", "Контакты"],
+        ["ta dars", "lessons", "уроков"],
+        ["Akkaunt yaratish", "Create Account", "Создать аккаунт"],
+        ["Akkauntingiz yo'qmi?", "Don't have an account?", "Нет аккаунта?"],
+        ["Akkauntingiz bormi?", "Already have an account?", "Уже есть аккаунт?"],
+        ["Bu email bilan akkaunt allaqachon mavjud. Iltimos, tizimga kiring.", "An account with this email already exists. Please log in.", "Аккаунт с этим email уже существует. Пожалуйста, войдите."],
+        ["Bunday akkaunt topilmadi. Avval \"Akkaunt yaratish\" tugmasi orqali ro'yxatdan o'ting.", "Account not found. Please register first with the \"Create Account\" button.", "Аккаунт не найден. Сначала зарегистрируйтесь кнопкой «Создать аккаунт»."],
+        ["Profilni Tahrirlash", "Edit Profile", "Редактировать профиль"],
+        ["EMAIL POCHTA", "EMAIL", "ЭЛЕКТРОННАЯ ПОЧТА"],
+        ["PROFIL RASMI (AVATAR LINKI)", "PROFILE PICTURE (AVATAR LINK)", "ФОТО ПРОФИЛЯ (ССЫЛКА)"],
+        ["O'ZINGIZ HAQINGIZDA (BIO)", "ABOUT YOU (BIO)", "О СЕБЕ (БИО)"],
+        ["O'zgarishlarni Saqlash", "Save Changes", "Сохранить изменения"],
+        ["Admin Boshqaruvi", "Admin Access", "Вход администратора"],
+        ["Tizimga kirish uchun login va parolni kiriting", "Enter your login and password to sign in", "Введите логин и пароль для входа"],
+        ["ADMIN LOGIN", "ADMIN LOGIN", "ЛОГИН АДМИНА"],
+        ["Admin Panelga Kirish", "Enter Admin Panel", "Войти в админ-панель"],
+        ["Savatcha", "Cart", "Корзина"],
+        ["To'lov qilish (Click / Payme)", "Checkout (Click / Payme)", "Оплатить (Click / Payme)"],
+        ["Savatcha bo'sh", "Your cart is empty", "Корзина пуста"],
+        ["EduFlow PRO A'zolik", "EduFlow PRO Membership", "Членство EduFlow PRO"],
+        ["Muddatni tanlang - cheksiz imkoniyatlar", "Choose a period – unlimited possibilities", "Выберите срок — безграничные возможности"],
+        ["1 oylik", "1 month", "1 месяц"],
+        ["1 yillik", "1 year", "1 год"],
+        ["UZS / 1 oy", "UZS / 1 month", "UZS / 1 месяц"],
+        ["UZS / 1 yil", "UZS / 1 year", "UZS / 1 год"],
+        ["Barcha 100+ kurslarga to'liq va cheksiz kirish", "Full unlimited access to all 100+ courses", "Полный безлимитный доступ ко всем 100+ курсам"],
+        ["O'qituvchilarga shaxsiy topshiriq va savollar yo'llash", "Send personal assignments and questions to teachers", "Отправляйте преподавателям личные задания и вопросы"],
+        ["Profil va Headerda rasmiy PRO oltin Crown 👑 nishoni", "Official gold PRO Crown 👑 badge in profile and header", "Официальный золотой значок PRO Crown 👑 в профиле и шапке"],
+        ["Parolni Almashtirish", "Change Password", "Сменить пароль"],
+        ["! yangi parol esdan chiqmasin", "! don't forget your new password", "! не забудьте новый пароль"],
+        ["yangi parol esdan chiqmasin", "don't forget your new password", "не забудьте новый пароль"],
+        ["HOZIRGI PAROL", "CURRENT PASSWORD", "ТЕКУЩИЙ ПАРОЛЬ"],
+        ["YANGI PAROL", "NEW PASSWORD", "НОВЫЙ ПАРОЛЬ"],
+        ["YANGI PAROLNI TASDIQLASH", "CONFIRM NEW PASSWORD", "ПОДТВЕРДИТЕ НОВЫЙ ПАРОЛЬ"],
+        ["Parolni Saqlash", "Save Password", "Сохранить пароль"],
+        ["Hozircha hech kim ro'yxatdan o'tmagan", "No one has registered yet", "Пока никто не зарегистрировался"],
+        ["ALL Categories", "All Categories", "Все категории", "Barcha kategoriyalar"],
+        ["Hech qanday kurs topilmadi", "No courses found", "Курсы не найдены"],
+        ["Siz nimalarni o'rganasiz", "What you will learn", "Чему вы научитесь"],
+        ["reyting", "rating", "рейтинг"],
+        ["sharh", "reviews", "отзывов"],
+        ["Kurs muallifi", "Course author", "Автор курса"],
+        ["Hoziroq boshlang", "Start right now", "Начните прямо сейчас"],
+        ["EduFlow bilan yangi kasb egallang!", "Gain a new profession with EduFlow!", "Освойте новую профессию с EduFlow!"],
+        ["Videoni ochish", "Open video", "Открыть видео"],
+        ["Avto-taqdimot", "Auto presentation", "Автопрезентация"],
+        ["Haqiqiy video qo'shish: Admin panel → Kurslarni boshqarish → VIDEO LINKI.", "To add a real video: Admin panel → Manage courses → VIDEO LINK.", "Чтобы добавить настоящее видео: Админ-панель → Управление курсами → ССЫЛКА НА ВИДЕО."],
+        ["← Katalogga qaytish", "← Back to catalog", "← Назад в каталог"],
+        ["Kurs Haqida", "About the Course", "О курсе"],
+        ["PRO Bilan Bepul Ko'rish", "Watch Free with PRO", "Смотреть бесплатно с PRO"],
+        ["Profilga kirish uchun tizimga kiring", "Log in to access your profile", "Войдите, чтобы открыть профиль"],
+        ["EduFlow platformasi faol talabasi", "Active student of the EduFlow platform", "Активный студент платформы EduFlow"],
+        ["Hozircha saqlangan kurslar mavjud emas.", "No saved courses yet.", "Сохранённых курсов пока нет."],
+        ["Admin Kirish Talab Qilinadi", "Admin Login Required", "Требуется вход администратора"],
+        ["EduFlow Control Center", "EduFlow Control Center", "Центр управления EduFlow"],
+        ["Admin Boshqaruv Paneli", "Admin Dashboard", "Панель администратора"],
+        ["Admin Chiqish", "Admin Logout", "Выход администратора"],
+        ["Jonli", "Live", "Онлайн"],
+        ["Ro'yxatdan o'tganlar", "Registered", "Зарегистрированные"],
+        ["Jami Kurslar", "Total Courses", "Всего курсов"],
+        ["Kategoriyalar", "Categories", "Категории"],
+        ["PRO Active", "PRO Active", "PRO активные", "PRO faol"],
+        ["Tizim Statusi", "System Status", "Статус системы"],
+        ["Ro'yxatdan o'tgan foydalanuvchilar", "Registered users", "Зарегистрированные пользователи"],
+        ["Bugun:", "Today:", "Сегодня:"],
+        ["Yangilandi:", "Updated:", "Обновлено:"],
+        ["Eksport", "Export", "Экспорт"],
+        ["Import", "Import", "Импорт"],
+        ["Ism", "Name", "Имя"],
+        ["Sana", "Date", "Дата"],
+        ["Yangi Kurs Qo'shish", "Add New Course", "Добавить новый курс"],
+        ["KURS NOMI", "COURSE NAME", "НАЗВАНИЕ КУРСА"],
+        ["KATEGORIYA", "CATEGORY", "КАТЕГОРИЯ"],
+        ["NARXI (UZS)", "PRICE (UZS)", "ЦЕНА (UZS)"],
+        ["O'QITUVCHI", "INSTRUCTOR", "ПРЕПОДАВАТЕЛЬ"],
+        ["RASM LINKI (URL)", "IMAGE LINK (URL)", "ССЫЛКА НА ИЗОБРАЖЕНИЕ (URL)"],
+        ["VIDEO LINKI (YouTube yoki .mp4)", "VIDEO LINK (YouTube or .mp4)", "ССЫЛКА НА ВИДЕО (YouTube или .mp4)"],
+        ["+ Qo'shish", "+ Add", "+ Добавить"],
+        ["Kurslarni Boshqarish va Narxni Tahrirlash", "Manage Courses & Edit Prices", "Управление курсами и редактирование цен"],
+        ["Kategoriyadagi barcha kurslarga video:", "Video for all courses in a category:", "Видео для всех курсов категории:"],
+        ["Qo'llash", "Apply", "Применить"],
+        ["VIDEO LINKI", "VIDEO LINK", "ССЫЛКА НА ВИДЕО"],
+        ["AMALLAR", "ACTIONS", "ДЕЙСТВИЯ"],
+        ["Lokal rejim (Firebase ulanmagan)", "Local mode (Firebase not connected)", "Локальный режим (Firebase не подключён)"],
+        ["Firebase ulangan", "Firebase connected", "Firebase подключён"],
+        ["Firebase xatosi (Console ga qarang)", "Firebase error (see Console)", "Ошибка Firebase (см. Console)"],
+        ["Amaliy Topshiriqlar", "Practical Assignments", "Практические задания"],
+        ["Python OOP - Amaliy topshiriq #1", "Python OOP - Practical assignment #1", "Python OOP — практическое задание №1"],
+        ["Kutilmoqda", "Pending", "В ожидании"],
+        ["Biz Bilan Bog'lanish", "Contact Us", "Свяжитесь с нами"],
+        ["XABAR NOMI", "MESSAGE SUBJECT", "ТЕМА СООБЩЕНИЯ"],
+        ["XABARINGIZ", "YOUR MESSAGE", "ВАШЕ СООБЩЕНИЕ"],
+        ["Yuborish", "Send", "Отправить"],
+        ["Savatchada", "In Cart", "В корзине"],
+        ["Savatchaga Qo'shish", "Add to Cart", "В корзину"],
+        // placeholder / title
+        ["Foydalanuvchini o'chirish", "Delete user", "Удалить пользователя"],
+        ["Search...", "Search...", "Поиск...", "Qidirish..."],
+        ["Kurs videosi", "Course video", "Видео курса"],
+        ["Ijro etish / to'xtatish", "Play / pause", "Воспроизвести / пауза"],
+        ["Masalan: Python Django Noldan", "e.g. Python Django from Scratch", "Например: Python Django с нуля"],
+        ["https://youtu.be/... (bo'sh = o'chirish)", "https://youtu.be/... (empty = remove)", "https://youtu.be/... (пусто = удалить)"],
+        ["Narx va videoni saqlash", "Save price and video", "Сохранить цену и видео"],
+        ["Kursni o'chirish", "Delete course", "Удалить курс"],
+        ["Mavzu", "Subject", "Тема"],
+        ["Savol yoki taklifingizni yozing...", "Write your question or suggestion...", "Напишите ваш вопрос или предложение..."],
+        // kurs nomlari va tavsifi
+        ["Full-stack Web Dasturlash (Python & React)", "Full-stack Web Development (Python & React)", "Full-stack веб-разработка (Python и React)"],
+        ["UI/UX Dizayn va Figma asoslari", "UI/UX Design and Figma Basics", "Основы UI/UX-дизайна и Figma"],
+        ["SMM va Zamonaviy Marketing", "SMM and Modern Marketing", "SMM и современный маркетинг"],
+        ["Ingliz tili: Beginner'dan IELTS 7.5'gacha", "English: From Beginner to IELTS 7.5", "Английский: от Beginner до IELTS 7.5"],
+        ["Biznes va Startap asoslari", "Business and Startup Basics", "Основы бизнеса и стартапов"],
+        ["Mobile App Development: Flutter", "Mobile App Development: Flutter", "Разработка мобильных приложений: Flutter"],
+        ["Grafik Dizayn: Photoshop va Illustrator", "Graphic Design: Photoshop and Illustrator", "Графический дизайн: Photoshop и Illustrator"],
+        ["Ispan tili: Noldan so'zlashuv", "Spanish: Conversation from Scratch", "Испанский: разговорный с нуля"],
+        ["Finans va Buxgalteriya asoslari", "Finance and Accounting Basics", "Основы финансов и бухгалтерии"],
+        ["Data Science va Machine Learning Python'da", "Data Science and Machine Learning in Python", "Data Science и машинное обучение на Python"],
+        ["Ushbu interaktiv kurs orqali siz noldan boshlab professional ko'nikmalarni egallaysiz va amaliy loyihalar ustida ishlaysiz.", "With this interactive course you will master professional skills from scratch and work on practical projects.", "На этом интерактивном курсе вы с нуля освоите профессиональные навыки и поработаете над практическими проектами."],
+        ["Python va React yordamida veb-ilovaning ham server (backend), ham ko'rinadigan (frontend) qismini yaratishga yo'naltirilgan kurs. Darslar dasturlash asoslaridan boshlanadi: o'zgaruvchilar va ma'lumot turlari, if / else shartlari, sikllar va funksiyalar. Dasturlashda tajribangiz bo'lmasa ham boshlashingiz mumkin.", "A course aimed at building both the server (backend) and the visible (frontend) parts of a web app with Python and React. The lessons start with programming basics: variables and data types, if / else conditions, loops and functions. You can start even with no programming experience.", "Курс о создании и серверной (backend), и видимой (frontend) части веб-приложения на Python и React. Уроки начинаются с основ программирования: переменные и типы данных, условия if / else, циклы и функции. Начать можно даже без опыта в программировании."],
+        ["Foydalanuvchi tajribasi (UX) va interfeys dizayni asoslari hamda Figma dasturida amaliy ishlash kursi. Darslarda UX nima ekanligi, Figma muhiti, rang va shriftni to'g'ri tanlash va interfeys prototipini yaratish ko'riladi.", "A course on the basics of user experience (UX) and interface design, with hands-on work in Figma. The lessons cover what UX is, the Figma workspace, choosing colors and fonts, and building an interface prototype.", "Курс по основам пользовательского опыта (UX) и дизайна интерфейсов с практической работой в Figma. На уроках разбираются: что такое UX, рабочая среда Figma, выбор цветов и шрифтов и создание прототипа интерфейса."],
+        ["Ijtimoiy tarmoqlarda biznesni targ'ib qilishning zamonaviy usullari kursi: maqsadli auditoriyani aniqlash, kontent reja tuzish, reklama yuritish va natijalarni tahlil qilish. SMM mutaxassisi bo'lmoqchi yoki o'z biznesini tarmoqlarda rivojlantirmoqchi bo'lganlarga mos.", "A course on modern ways to promote a business on social media: defining the target audience, planning content, running ads and analyzing the results. Suitable for those who want to become an SMM specialist or grow their own business on social networks.", "Курс о современных способах продвижения бизнеса в социальных сетях: определение целевой аудитории, составление контент-плана, запуск рекламы и анализ результатов. Подходит тем, кто хочет стать SMM-специалистом или развивать свой бизнес в соцсетях."],
+        ["Ingliz tilini Beginner darajasidan boshlab o'rganish kursi; IELTS tayyorgarligi uchun zarur lug'at va grammatika poydevorini yaratadi. Darslarda mavzuli so'zlar (salomlashish, oila, ovqat, sayohat, ish, vaqt, uy, sifatlar) talaffuzi bilan, grammatika esa (to be, Present Simple, artikllar, ko'plik, Past Simple, Present Continuous, will, qiyoslash darajasi) misol va mashqlar bilan o'rgatiladi.", "An English course starting from Beginner level that builds the vocabulary and grammar foundation needed for IELTS preparation. Thematic words (greetings, family, food, travel, work, time, home, adjectives) are taught with pronunciation, and grammar (to be, Present Simple, articles, plurals, Past Simple, Present Continuous, will, comparatives) with examples and exercises.", "Курс английского языка с уровня Beginner, который создаёт словарный и грамматический фундамент для подготовки к IELTS. Тематические слова (приветствия, семья, еда, путешествия, работа, время, дом, прилагательные) даются с произношением, а грамматика (to be, Present Simple, артикли, множественное число, Past Simple, Present Continuous, will, степени сравнения) — с примерами и упражнениями."],
+        ["Biznes va startap asoslari kursi: g'oyani real muammoga bog'lash va mijozlardan so'rab tekshirish, biznes modelni (kimga, nima va qanday sotish, daromad va xarajatlar) tuzish, marketing va birinchi qadamlar. O'z ishini boshlamoqchi bo'lganlar uchun.", "A course on business and startup basics: tying an idea to a real problem and testing it with customers, building a business model (who you sell to, what and how, revenue and costs), marketing, and the first steps. For those who want to start their own business.", "Курс по основам бизнеса и стартапов: связать идею с реальной проблемой и проверить её на клиентах, построить бизнес-модель (кому, что и как продавать, доходы и расходы), маркетинг и первые шаги. Для тех, кто хочет начать своё дело."],
+        ["Dart tilida Flutter yordamida mobil ilovalar yaratish kursi. Darslarda widgetlar, Stateless va Stateful widgetlar, ekranlar orasida navigatsiya hamda API bilan ishlash ko'riladi.", "A course on building mobile apps with Flutter in the Dart language. The lessons cover widgets, Stateless and Stateful widgets, navigation between screens, and working with APIs.", "Курс по созданию мобильных приложений на Flutter (язык Dart). На уроках разбираются виджеты, Stateless и Stateful виджеты, навигация между экранами и работа с API."],
+        ["Grafik dizayn asoslari va Photoshop hamda Illustrator dasturlarida ishlash kursi: kompozitsiya qoidalari, Photoshop qatlamlari va maskalar, Illustrator'da vektor grafika va tayyor ishni to'g'ri formatda eksport qilish.", "A course on graphic design basics and working in Photoshop and Illustrator: composition rules, Photoshop layers and masks, vector graphics in Illustrator, and exporting finished work in the right format.", "Курс по основам графического дизайна и работе в Photoshop и Illustrator: правила композиции, слои и маски в Photoshop, векторная графика в Illustrator и экспорт готовой работы в нужном формате."],
+        ["Ispan tilini noldan o'rganib, so'zlashuv ko'nikmasini shakllantirish kursi. Salomlashish, ovqat va sayohat mavzularidagi so'zlar hamda artikllar (el / la) va ser fe'li kabi dastlabki grammatika qoidalari misollar va mashqlar bilan o'rgatiladi.", "A course for learning Spanish from scratch and building speaking skills. Words on greetings, food and travel are taught together with basic grammar such as articles (el / la) and the verb ser, using examples and exercises.", "Курс испанского языка с нуля для развития разговорных навыков. Слова на темы приветствий, еды и путешествий изучаются вместе с базовой грамматикой — артикли (el / la) и глагол ser — с примерами и упражнениями."],
+        ["Moliya va buxgalteriya asoslari kursi: pul oqimini yuritish, aktiv, majburiyat va kapital, debet va kredit, byudjet tuzish (50/30/20 qoidasi) hamda soliqlar bilan tanishuv.", "A course on finance and accounting basics: managing cash flow, assets, liabilities and equity, debit and credit, budgeting (the 50/30/20 rule), and an introduction to taxes.", "Курс по основам финансов и бухгалтерии: управление денежным потоком, активы, обязательства и капитал, дебет и кредит, составление бюджета (правило 50/30/20) и знакомство с налогами."],
+        ["Python'da ma'lumotlarni tahlil qilish va machine learning'ga kirish kursi: pandas bilan jadvallar va ma'lumotni tozalash, matplotlib bilan vizualizatsiya, machine learning asoslari va birinchi modelni yaratish.", "An introduction to data analysis and machine learning in Python: tables and data cleaning with pandas, visualization with matplotlib, machine learning basics, and building your first model.", "Введение в анализ данных и машинное обучение на Python: таблицы и очистка данных в pandas, визуализация в matplotlib, основы машинного обучения и создание первой модели."],
+        // kurs videosi sahnalari
+        ["Noldan boshlab kod yozishni o'rganasiz", "You will learn to code from scratch", "Вы научитесь программировать с нуля"],
+        ["Real loyihalar ustida amaliyot qilasiz", "You will practice on real projects", "Вы будете практиковаться на реальных проектах"],
+        ["Portfolio uchun tayyor ishlar yaratasiz", "You will create finished work for your portfolio", "Вы создадите готовые работы для портфолио"],
+        ["Zamonaviy dizayn vositalari bilan ishlaysiz", "You will work with modern design tools", "Вы будете работать с современными инструментами дизайна"],
+        ["Foydalanuvchi qulayligi (UX) asoslarini bilasiz", "You will know the basics of user experience (UX)", "Вы узнаете основы удобства пользователя (UX)"],
+        ["Portfolio uchun loyihalar yaratasiz", "You will create projects for your portfolio", "Вы создадите проекты для портфолио"],
+        ["Biznes g'oyangizni tekshirasiz", "You will test your business idea", "Вы проверите свою бизнес-идею"],
+        ["Moliya va rejalashtirishni o'rganasiz", "You will learn finance and planning", "Вы изучите финансы и планирование"],
+        ["Mijozlarni jalb qilish yo'llarini bilasiz", "You will know how to attract customers", "Вы узнаете, как привлекать клиентов"],
+        ["So'zlashuv va tinglab tushunishni mashq qilasiz", "You will practice speaking and listening", "Вы потренируете разговорную речь и аудирование"],
+        ["Grammatika va lug'atni mustahkamlaysiz", "You will strengthen grammar and vocabulary", "Вы закрепите грамматику и словарный запас"],
+        ["Real hayotiy suhbatlarga tayyorlanasiz", "You will prepare for real-life conversations", "Вы подготовитесь к реальным разговорам"],
+        ["Kontent reja va strategiya tuzasiz", "You will build a content plan and strategy", "Вы составите контент-план и стратегию"],
+        ["Reklama va auditoriya bilan ishlaysiz", "You will work with ads and audiences", "Вы будете работать с рекламой и аудиторией"],
+        ["Natijalarni tahlil qilishni o'rganasiz", "You will learn to analyze results", "Вы научитесь анализировать результаты"],
+        ["Yangi ko'nikmalarni egallaysiz", "You will gain new skills", "Вы освоите новые навыки"],
+        ["Amaliy topshiriqlarni bajarasiz", "You will complete practical assignments", "Вы выполните практические задания"],
+        ["Mentor yordamiga ega bo'lasiz", "You will get mentor support", "Вы получите поддержку наставника"],
+        // alert / confirm
+        ["Fayl noto'g'ri. Faqat \"Eksport\" tugmasi bilan saqlangan .json faylni yuklang.", "Invalid file. Upload only a .json file saved with the \"Export\" button.", "Неверный файл. Загрузите только .json-файл, сохранённый кнопкой «Экспорт»."],
+        ["Xabaringiz yuborildi!", "Your message has been sent!", "Ваше сообщение отправлено!"],
+        ["To'lov muvaffaqiyatli amalga oshirildi! Kurslar profilingizga biriktirildi.", "Payment successful! The courses have been added to your profile.", "Оплата прошла успешно! Курсы добавлены в ваш профиль."],
+        ["PRO obunangiz muddati tugadi. Yangilash uchun \"PRO Tariflar\" bo'limiga o'ting.", "Your PRO subscription has expired. Go to the \"PRO Plans\" section to renew it.", "Срок вашей PRO-подписки истёк. Для продления перейдите в раздел «PRO-тарифы»."],
+        ["Login yoki parol xato!", "Incorrect login or password!", "Неверный логин или пароль!"],
+        ["Hozirgi parol noto'g'ri kiritildi!", "The current password is incorrect!", "Текущий пароль введён неверно!"],
+        ["Yangi parol va tasdiqlash paroli mos kelmadi!", "The new password and confirmation do not match!", "Новый пароль и подтверждение не совпадают!"],
+        ["Admin paroli muvaffaqiyatli o'zgartirildi!", "Admin password changed successfully!", "Пароль администратора успешно изменён!"],
+        ["Video havolasi noto'g'ri. https:// bilan boshlanadigan havola kiriting.", "Invalid video link. Enter a link starting with https://.", "Неверная ссылка на видео. Введите ссылку, начинающуюся с https://."]
+    ];
+
+    const norm = s => s.replace(/\s+/g, ' ').trim();
+    const MAP = new Map();
+    D.forEach(([u, e, r, uo]) => MAP.set(norm(u), { uz: uo, en: e, ru: r }));
+
+    const planL = (x, l) => { const e = MAP.get(x); return e ? (l === 'uz' ? x : e[l]) : x; };
+    const dayW = { uz: 'kun', en: 'days', ru: 'дн.' };
+    const P = [
+        { re: /^(\d+) ta dars$/, en: m => `${m[1]} lessons`, ru: m => `${m[1]} уроков` },
+        { re: /^(.*) \((\d+) sharhlar\)$/, en: m => `${m[1]} (${m[2]} reviews)`, ru: m => `${m[1]} (${m[2]} отзывов)` },
+        { re: /^Saqlangan Kurslar \((\d+)\)$/, en: m => `Saved Courses (${m[1]})`, ru: m => `Сохранённые курсы (${m[1]})` },
+        { re: /^(1 oylik|1 yillik) · (.+) gacha$/, en: m => `${planL(m[1], 'en')} · until ${m[2]}`, ru: m => `${planL(m[1], 'ru')} · до ${m[2]}` },
+        {
+            re: /^PRO (\S+) gacha \((\d+) kun qoldi\)(\. Yangi obuna muddatni uzaytiradi\.)?$/,
+            en: m => `PRO until ${m[1]} (${m[2]} days left)` + (m[3] ? '. A new subscription extends the period.' : ''),
+            ru: m => `PRO до ${m[1]} (осталось ${m[2]} дн.)` + (m[3] ? '. Новая подписка продлит срок.' : '')
+        },
+        { re: /^Kod yuborilmadi\. Birozdan so'ng qayta urinib ko'ring\.(?: \(([\s\S]*)\))?$/, en: m => `The code could not be sent. Please try again in a moment.${m[1] ? ` (${m[1]})` : ''}`, ru: m => `Не удалось отправить код. Повторите попытку чуть позже.${m[1] ? ` (${m[1]})` : ''}` },
+        { re: /^Qayta yuborish \((\d+) s\)$/, en: m => `Resend (${m[1]} s)`, ru: m => `Отправить снова (${m[1]} с)` },
+        { re: /^Kod (.+) manziliga yuborildi\. 10 daqiqa amal qiladi\.$/, en: m => `The code was sent to ${m[1]}. It is valid for 10 minutes.`, ru: m => `Код отправлен на ${m[1]}. Действителен 10 минут.` },
+        { re: /^Test rejimi: email xizmati ulanmagan\. Kod: (\d+)$/, en: m => `Test mode: email service is not connected. Code: ${m[1]}`, ru: m => `Тестовый режим: почтовый сервис не подключён. Код: ${m[1]}` },
+        { re: /^Obunani tasdiqlash \((.+)\)$/, en: m => `Confirm subscription (${m[1]})`, ru: m => `Подтвердить подписку (${m[1]})` },
+        { re: /^Muddati: (\d+) kun qoldi$/, en: m => `Due: ${m[1]} days left`, ru: m => `Срок: осталось ${m[1]} дн.` },
+        { re: /^Kurs videosi(.*)$/, en: m => `Course video${m[1]}`, ru: m => `Видео курса${m[1]}` },
+        { re: /^(.+) #(\d+)$/, en: m => MAP.has(m[1]) ? `${MAP.get(m[1]).en} #${m[2]}` : null, ru: m => MAP.has(m[1]) ? `${MAP.get(m[1]).ru} #${m[2]}` : null },
+        // alert / confirm
+        { re: /^"(.*)" foydalanuvchini o'chirmoqchimisiz\?$/, en: m => `Delete user "${m[1]}"?`, ru: m => `Удалить пользователя «${m[1]}»?` },
+        { re: /^Import tugadi: (\d+) ta yangi, (\d+) ta yangilandi\.$/, en: m => `Import finished: ${m[1]} new, ${m[2]} updated.`, ru: m => `Импорт завершён: новых — ${m[1]}, обновлено — ${m[2]}.` },
+        {
+            re: /^Tabriklaymiz! PRO \((.+)\) faollashtirildi\. Amal qilish muddati: (.+) gacha\.$/,
+            en: m => `Congratulations! PRO (${planL(m[1], 'en')}) is activated. Valid until: ${m[2]}.`,
+            ru: m => `Поздравляем! PRO (${planL(m[1], 'ru')}) активирован. Действует до: ${m[2]}.`
+        },
+        {
+            re: /^Kurs #(\d+) yangilandi: narx (.+) UZS(, video saqlandi)?\.$/,
+            en: m => `Course #${m[1]} updated: price ${m[2]} UZS${m[3] ? ', video saved' : ''}.`,
+            ru: m => `Курс #${m[1]} обновлён: цена ${m[2]} UZS${m[3] ? ', видео сохранено' : ''}.`
+        },
+        {
+            re: /^"(.*)" kategoriyasidagi (\d+) ta kursga (shu videoni qo'llaymizmi|videoni o'chiramizmi)\?$/,
+            en: m => `Do you want to ${m[3].startsWith('shu') ? 'apply this video to' : 'remove the video from'} ${m[2]} courses in the "${MAP.has(m[1]) ? MAP.get(m[1]).en : m[1]}" category?`,
+            ru: m => `${m[3].startsWith('shu') ? 'Применить это видео к' : 'Удалить видео у'} ${m[2]} курсам категории «${MAP.has(m[1]) ? MAP.get(m[1]).ru : m[1]}»?`
+        }
+    ];
+
+    function tr(raw, lang) {
+        const key = norm(raw);
+        if (!key) return null;
+        const e = MAP.get(key);
+        if (e) return lang === 'uz' ? (e.uz !== undefined ? e.uz : null) : e[lang];
+        if (lang === 'uz') return null;
+        for (const p of P) {
+            const m = key.match(p.re);
+            if (m) { const out = p[lang](m); if (out) return out; }
+        }
+        return null;
+    }
+    const L = () => (typeof currentLang !== 'undefined' && currentLang) || 'uz';
+
+    const noTr = n => { const e = n.nodeType === 1 ? n : n.parentElement; return !!(e && e.closest && e.closest('[translate="no"]')); };
+    function doText(n) {
+        if (noTr(n)) return;
+        const cur = n.nodeValue, lang = L();
+        const src = (n.__t !== undefined && cur === n.__t) ? n.__o : cur;
+        const t = tr(src, lang);
+        if (t !== null) {
+            const lead = src.match(/^\s*/)[0], trail = src.match(/\s*$/)[0];
+            const out = lead + t + trail;
+            if (cur !== out) n.nodeValue = out;
+            n.__o = src; n.__t = out;
+        } else if (src !== cur) {
+            n.nodeValue = src; n.__t = undefined; n.__o = undefined;
+        }
+    }
+    const ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
+    function doEl(el) {
+        const lang = L();
+        el.__a = el.__a || {};
+        for (const a of ATTRS) {
+            if (!el.hasAttribute(a)) continue;
+            const cur = el.getAttribute(a), rec = el.__a[a];
+            const src = (rec && cur === rec.t) ? rec.o : cur;
+            const t = tr(src, lang);
+            if (t !== null) { if (cur !== t) el.setAttribute(a, t); el.__a[a] = { o: src, t }; }
+            else if (src !== cur) { el.setAttribute(a, src); delete el.__a[a]; }
+        }
+    }
+    function walk(root) {
+        if (root.nodeType === 3) { doText(root); return; }
+        if (root.nodeType !== 1) return;
+        const tag = root.tagName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || noTr(root)) return;
+        doEl(root);
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+            acceptNode: n => (n.nodeType === 1 && (n.tagName === 'SCRIPT' || n.tagName === 'STYLE' || n.getAttribute('translate') === 'no')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+        });
+        let n;
+        while ((n = w.nextNode())) { if (n.nodeType === 3) doText(n); else doEl(n); }
+    }
+
+    const TITLES = { uz: "EduFlow - Onlayn Ta'lim Platformasi", en: "EduFlow - Online Education Platform", ru: "EduFlow — онлайн-платформа обучения" };
+    const OPTS = { childList: true, subtree: true, characterData: true };
+    const mo = new MutationObserver(recs => {
+        mo.disconnect();
+        try {
+            for (const r of recs) {
+                if (r.type === 'characterData') doText(r.target);
+                else r.addedNodes.forEach(walk);
+            }
+        } finally { mo.observe(document.body, OPTS); }
+    });
+    function applyAll() {
+        mo.disconnect();
+        try {
+            const l = L();
+            document.documentElement.lang = l;
+            document.title = (window.pageTitle && window.pageTitle(l)) || TITLES[l] || TITLES.uz;
+            walk(document.body);
+        } finally { mo.observe(document.body, OPTS); }
+    }
+
+    // alert / confirm xabarlarini tarjima qilish
+    const _alert = window.alert.bind(window), _confirm = window.confirm.bind(window);
+    const msg = m => { const s = String(m); const t = tr(s, L()); return t !== null ? t : s; };
+    window.alert = m => _alert(msg(m));
+    window.confirm = m => _confirm(msg(m));
+
+    // Til almashganda butun sahifani (modal, footer, admin) qayta tarjima qilish
+    const _change = window.changeLanguage;
+    window.changeLanguage = function (lang) { _change(lang); applyAll(); };
+
+    window.applyI18nAll = applyAll;
+    applyAll();
+    document.addEventListener('DOMContentLoaded', applyAll);
+    window.addEventListener('load', applyAll);
+})();
+    
+    </script>
+    <script>
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('lang-select').value = currentLang;
+    setThemeIcon();
+    window.managerStart();
+});
+
+    </script>
+    <script>
+
+    // Fayl nomini tekshirish: boshqa fayl nomi ostida ochilsa ogohlantiradi
+    (function () {
+        var f = (location.pathname.split('/').pop() || '').toLowerCase().replace(/\.html$/, '');
+        var ok = ['manager'];
+        if (location.protocol === 'file:' || ok.indexOf(f) !== -1) return;
+        function show() {
+            var d = document.createElement('div');
+            d.setAttribute('role', 'alert');
+            d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#dc2626;color:#fff;font:600 15px/1.5 system-ui,sans-serif;padding:12px 16px;text-align:center';
+            d.textContent = "Diqqat: bu manzilda noto'g'ri fayl turibdi. \"" + f + ".html\" ichida menejer paneli (manager.html) kodi bor. GitHub'ga to'g'ri faylni qayta yuklang.";
+            document.body.appendChild(d);
+        }
+        if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+    })();
+    
+    </script>
+</body>
+
+</html>

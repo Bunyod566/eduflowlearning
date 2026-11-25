@@ -466,8 +466,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             const nv = view === 'edit' ? 'courses' : view === 'group' ? 'groups' : view;
             document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === nv));
             if ($('#who')) $('#who').textContent = prof.name || '';
-            document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('hidden', !approved() && b.dataset.v !== 'home' && b.dataset.v !== 'profile'));
-            const fn = approved() ? ({ home: vHome, courses: vCourses, edit: vEdit, profile: vProfile, groups: vGroups, group: vGroup })[view] : (view === 'profile' ? vProfile : vPending);
+            document.querySelectorAll('.tnavb[data-v]').forEach(b => b.classList.toggle('hidden', !approved() && b.dataset.v !== 'home' && (b.dataset.v !== 'profile' || prof.approval === 'deleted')));
+            const fn = approved() ? ({ home: vHome, courses: vCourses, edit: vEdit, profile: vProfile, groups: vGroups, group: vGroup })[view] : (view === 'profile' && prof.approval !== 'deleted' ? vProfile : vPending);
             $('#main').innerHTML = fn();
             if (view === 'edit') prev();
             if (view !== lastView) window.scrollTo(0, 0);
@@ -627,6 +627,10 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
             <form onsubmit="chPw(event)" class="max-w-xl space-y-3 mt-10"><h2 class="fd font-bold">Parolni almashtirish</h2><input id="w-old" type="password" required class="tinp" placeholder="Hozirgi parol" autocomplete="current-password"><input id="w-new" type="password" required minlength="6" class="tinp" placeholder="Yangi parol" autocomplete="new-password"><button class="tbtn tbp">Parolni almashtirish</button></form>`;
         }
         function vPending() {
+            if (prof.approval === 'deleted') return `<div class="max-w-xl mx-auto py-10 text-center">
+                <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center bg-slate-200 dark:bg-gray-700"><i class="fa-solid fa-user-slash text-slate-600 dark:text-gray-300 text-3xl"></i></div>
+                <h1 class="fd text-2xl font-bold mt-5">Akkauntingiz o'chirilgan</h1>
+                <p class="text-slate-500 dark:text-gray-400 mt-3">Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.</p></div>`;
             const rej = prof.approval === 'rejected';
             return `<div class="max-w-xl mx-auto py-10 text-center">
                 <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${rej ? 'bg-rose-100 dark:bg-rose-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}">
@@ -1044,6 +1048,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Akkauntingiz o'chirilgan", "Your account has been deleted", "Ваш аккаунт удалён"],
+        ["Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.", "This teacher account was deleted by an EduFlow manager. Contact EduFlow if you have questions.", "Этот аккаунт преподавателя удалён менеджером EduFlow. Если есть вопросы, свяжитесь с EduFlow."],
         ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],
         ["Ball qo'shish", "Add points", "Начислить баллы"],
         ["Ball ayirish", "Deduct points", "Списать баллы"],
@@ -1497,6 +1503,23 @@ window.addEventListener('DOMContentLoaded', () => {
     applyRoute();
 });
 
+    </script>
+
+    <script>
+    // Fayl nomini tekshirish: boshqa fayl nomi ostida ochilsa ogohlantiradi
+    (function () {
+        var f = (location.pathname.split('/').pop() || '').toLowerCase().replace(/\.html$/, '');
+        var ok = ['teacher'];
+        if (location.protocol === 'file:' || ok.indexOf(f) !== -1) return;
+        function show() {
+            var d = document.createElement('div');
+            d.setAttribute('role', 'alert');
+            d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#dc2626;color:#fff;font:600 15px/1.5 system-ui,sans-serif;padding:12px 16px;text-align:center';
+            d.textContent = "Diqqat: bu manzilda noto'g'ri fayl turibdi. \"" + f + ".html\" ichida ustozlar sayti (teacher.html) kodi bor. GitHub'ga to'g'ri faylni qayta yuklang.";
+            document.body.appendChild(d);
+        }
+        if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+    })();
     </script>
 </body>
 

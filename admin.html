@@ -1361,7 +1361,7 @@ function atcRender() {
     let body;
     if (!cloudDb) body = `<p class="text-sm text-gray-500">Firebase ulanmagan.</p>`;
     else if (!adminFbUser) body = `<form onsubmit="atcSignIn(event)" class="flex flex-wrap gap-2 items-center">
-        <div class="w-full text-sm text-gray-500 dark:text-gray-400">Ustozlar yuborgan kurslarni ko'rish uchun Firebase admin akkaunti (admin@eduflow.uz) bilan kiring. Brauzer eslab qoladi.</div>
+        <div class="w-full text-sm text-gray-500 dark:text-gray-400">Ustozlar, kurslar va Edu-Shop buyurtmalarini boshqarish uchun bosh egasi, menejer yoki admin emailingiz bilan kiring (parol manager.html da "Akkaunt yaratish" orqali o'rnatiladi). Brauzer eslab qoladi.</div>
         <input id="atc-email" type="email" required placeholder="Admin email" class="${inp} flex-1 min-w-[160px]">
         <input id="atc-pass" type="password" required placeholder="Parol" class="${inp} flex-1 min-w-[120px]">
         <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold rounded-lg text-sm transition">Kirish</button></form>`;
@@ -1370,10 +1370,8 @@ function atcRender() {
         const em = String(adminFbUser.email || '').toLowerCase();
         body = `<div class="text-sm space-y-2">
             <p class="text-red-600 font-semibold">Ruxsat yo'q: Firestore ustoz kurslarini ko'rsatmayapti.</p>
-            <p class="text-gray-600 dark:text-gray-300">Siz Firebase'ga <b>${escapeHtml(em)}</b> sifatida kirgansiz. Qoidalardagi admin email: <b>admin@eduflow.uz</b>.</p>
-            ${em === 'admin@eduflow.uz'
-                ? `<p class="text-gray-600 dark:text-gray-300">Email to'g'ri. Demak qoidalar hali kuchga kirmagan: Firebase Console > Firestore Database > Rules da ustozlar qoidalari borligini tekshiring va <b>Publish</b> ni bosing, so'ng sahifani yangilang.</p>`
-                : `<p class="text-gray-600 dark:text-gray-300">Email boshqa. Yoki shu tugma bilan chiqib, admin@eduflow.uz bilan kiring, yoki Rules'dagi <code>admin@eduflow.uz</code> ni <b>${escapeHtml(em)}</b> ga almashtirib Publish qiling.</p>`}
+            <p class="text-gray-600 dark:text-gray-300">Siz Firebase'ga <b>${escapeHtml(em)}</b> sifatida kirgansiz.</p>
+            <p class="text-gray-600 dark:text-gray-300">Bu email xodimlar ro'yxatida bo'lishi kerak: menejer uni manager.html dagi "Xodimlar" bo'limida admin qilib qo'shadi. Qo'shilgan bo'lsa, Firestore Rules'ning oxirgi versiyasi Publish qilinganini tekshiring va sahifani yangilang.</p>
             <button type="button" onclick="acmSignOut()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-bold text-xs">Firebase admin akkauntidan chiqish</button>
         </div>`;
     }
@@ -1427,7 +1425,7 @@ function atrAuthChanged() {
     if (!adminFbUser || !cloudDb) { atrState = 'off'; atrRender(); return; }
     atrState = 'loading'; atrRender();
     atrUnsub = cloudDb.collection('teachers').onSnapshot(snap => {
-        const rank = { pending: 0, approved: 1, rejected: 2 };
+        const rank = { pending: 0, approved: 1, rejected: 2, deleted: 3 };
         atrList = snap.docs.map(d => ({ id: d.id, ...d.data() }))
             .sort((x, y) => (rank[x.approval || 'pending'] - rank[y.approval || 'pending']) || (y.createdAt || '').localeCompare(x.createdAt || ''));
         atrState = 'on'; atrRender();
@@ -1440,7 +1438,7 @@ function atrToggleAll() { atrShowAll = !atrShowAll; atrRender(); }
 function atrRender() {
     const box = document.getElementById('admin-teachers');
     if (!box) return;
-    const ST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'], rejected: ['Rad etilgan', 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'] };
+    const ST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'], rejected: ['Rad etilgan', 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'], deleted: ["O'chirilgan", 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'] };
     const pend = atrList.filter(t => (t.approval || 'pending') === 'pending');
     const shown = atrShowAll ? atrList : pend;
     let body;
@@ -1534,7 +1532,7 @@ function ashAuthChanged() {
     if (!adminFbUser || !cloudDb) { ashState = 'off'; ashRender(); return; }
     ashState = 'loading'; ashRender();
     ashUnsub = cloudDb.collection('shopOrders').onSnapshot(snap => {
-        const rank = { pending: 0, approved: 1, rejected: 2 };
+        const rank = { pending: 0, approved: 1, rejected: 2, deleted: 3 };
         ashList = snap.docs.map(d => ({ id: d.id, ...d.data() }))
             .sort((x, y) => (rank[x.status] ?? 3) - (rank[y.status] ?? 3) || (x.status === 'pending' ? (x.createdAt || '').localeCompare(y.createdAt || '') : (y.createdAt || '').localeCompare(x.createdAt || '')));
         ashState = 'on'; ashRender(); ashLoadBalances();
