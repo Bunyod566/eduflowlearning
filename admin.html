@@ -1371,7 +1371,7 @@ function atcRender() {
         body = `<div class="text-sm space-y-2">
             <p class="text-red-600 font-semibold">Ruxsat yo'q: Firestore ustoz kurslarini ko'rsatmayapti.</p>
             <p class="text-gray-600 dark:text-gray-300">Siz Firebase'ga <b>${escapeHtml(em)}</b> sifatida kirgansiz.</p>
-            <p class="text-gray-600 dark:text-gray-300">Bu email xodimlar ro'yxatida bo'lishi kerak: menejer uni manager.html dagi "Xodimlar" bo'limida admin qilib qo'shadi. Qo'shilgan bo'lsa, Firestore Rules'ning oxirgi versiyasi Publish qilinganini tekshiring va sahifani yangilang.</p>
+            <p class="text-gray-600 dark:text-gray-300">Bu email adminlar ro'yxatida bo'lishi kerak: menejer uni manager.html dagi "Adminlar" bo'limida admin qilib qo'shadi. Qo'shilgan bo'lsa, Firestore Rules'ning oxirgi versiyasi Publish qilinganini tekshiring va sahifani yangilang.</p>
             <button type="button" onclick="acmSignOut()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-bold text-xs">Firebase admin akkauntidan chiqish</button>
         </div>`;
     }
@@ -1438,7 +1438,7 @@ function atrToggleAll() { atrShowAll = !atrShowAll; atrRender(); }
 function atrRender() {
     const box = document.getElementById('admin-teachers');
     if (!box) return;
-    const ST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'], rejected: ['Rad etilgan', 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'], deleted: ["O'chirilgan", 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'] };
+    const ST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'], rejected: ['Rad etilgan', 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'], deleted: ['Ishdan haydalgan', 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'] };
     const pend = atrList.filter(t => (t.approval || 'pending') === 'pending');
     const shown = atrShowAll ? atrList : pend;
     let body;

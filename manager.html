@@ -547,28 +547,28 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
     }
 
     // ===== USTOZLAR =====
-    const TST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'], rejected: ['Rad etilgan', 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300'], deleted: ["O'chirilgan", 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'] };
+    const TST = { pending: ['Kutmoqda', 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'], approved: ['Tasdiqlangan', 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'], rejected: ['Rad etilgan', 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300'], deleted: ['Ishdan haydalgan', 'bg-slate-200 dark:bg-gray-700 text-slate-700 dark:text-gray-300'] };
     function vTeachers() {
         const list = teachers.filter(t => (showDeleted ? t.approval === 'deleted' : t.approval !== 'deleted') && match(t.name, t.email, t.specialty));
-        const head = `<h1 class="fd text-2xl font-bold mb-5">Ustozlar</h1>` + toolbar(list.length, "Ism, email yoki yo'nalish bo'yicha qidiring", "O'chirilganlar");
-        if (!list.length) return head + `<p class="${muted}">${showDeleted ? "O'chirilgan ustoz yo'q." : 'Ustoz topilmadi.'}</p>`;
+        const head = `<h1 class="fd text-2xl font-bold mb-5">Ustozlar</h1>` + toolbar(list.length, "Ism, email yoki yo'nalish bo'yicha qidiring", "Haydalganlar");
+        if (!list.length) return head + `<p class="${muted}">${showDeleted ? "Ishdan haydalgan ustoz yo'q." : 'Ustoz topilmadi.'}</p>`;
         return head + `<ul class="space-y-2">${list.map(t => {
             const s = TST[t.approval || 'pending'] || TST.pending;
             return `<li class="${card} px-4 py-3 flex flex-wrap items-center gap-3">
                 <div class="flex-1 min-w-[12rem]"><div class="flex flex-wrap items-center gap-2"><span translate="no" class="font-semibold">${esc(t.name || '-')}</span><span class="text-xs font-bold px-2 py-0.5 rounded-full ${s[1]}">${s[0]}</span></div>
                     <div class="text-xs ${muted}"><span translate="no">${esc(t.email || '')}</span>${t.specialty ? ` · <span>${esc(t.specialty)}</span>` : ''} · <span>${dt(t.createdAt)}</span></div></div>
                 ${t.approval === 'deleted'
-                    ? `<button onclick="mTeacherDel('${esc(t._id)}',false)" class="tbtn tbg"><i class="fa-solid fa-rotate-left mr-1"></i>Tiklash</button>`
-                    : `<button onclick="mTeacherDel('${esc(t._id)}',true)" class="tbtn tbg text-rose-600"><i class="fa-solid fa-trash mr-1"></i>O'chirish</button>`}</li>`;
-        }).join('')}</ul><p class="text-xs ${muted} mt-4">O'chirilgan ustoz ustozlar saytida hech narsa qila olmaydi. Uning kurslari va o'quvchilarining ballari saqlanib qoladi.</p>`;
+                    ? `<button onclick="mTeacherDel('${esc(t._id)}',false)" class="tbtn tbg"><i class="fa-solid fa-rotate-left mr-1"></i>Ishga qaytarish</button>`
+                    : `<button onclick="mTeacherDel('${esc(t._id)}',true)" class="tbtn tbg text-rose-600"><i class="fa-solid fa-user-xmark mr-1"></i>Ishdan haydash</button>`}</li>`;
+        }).join('')}</ul><p class="text-xs ${muted} mt-4">Ishdan haydalgan ustoz ustozlar saytida hech narsa qila olmaydi. Uning kurslari va o'quvchilarining ballari saqlanib qoladi.</p>`;
     }
     async function mTeacherDel(id, del) {
         const t = teachers.find(x => x._id === id); if (!t) return;
-        if (del && !confirm(`"${t.name || t.email}" ustoz akkauntini o'chirasizmi? U kurs yarata olmaydi, ball bera olmaydi va davomat qila olmaydi. Keyin tiklash mumkin.`)) return;
-        if (!del && !confirm(`"${t.name || t.email}" ni tiklaysizmi? U tasdiqlangan ustoz bo'ladi.`)) return;
+        if (del && !confirm(`"${t.name || t.email}" ni ishdan haydaysizmi? U kurs yarata olmaydi, ball bera olmaydi va davomat qila olmaydi. Keyin ishga qaytarish mumkin.`)) return;
+        if (!del && !confirm(`"${t.name || t.email}" ni ishga qaytarasizmi? U yana tasdiqlangan ustoz bo'ladi.`)) return;
         try {
-            await db.collection('teachers').doc(id).update(del ? { approval: 'deleted', approvalReason: "Akkaunt menejer tomonidan o'chirildi." } : { approval: 'approved', approvalReason: '' });
-            toast(del ? "Ustoz o'chirildi." : 'Ustoz tiklandi.');
+            await db.collection('teachers').doc(id).update(del ? { approval: 'deleted', approvalReason: 'Menejer tomonidan ishdan haydaldi.' } : { approval: 'approved', approvalReason: '' });
+            toast(del ? 'Ustoz ishdan haydaldi.' : 'Ustoz ishga qaytarildi.');
         } catch (x) { toast('Saqlanmadi. ' + fsErr(x), true); }
     }
 
@@ -633,6 +633,14 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Ishdan haydash", "Dismiss", "Уволить"],
+        ["Ishga qaytarish", "Reinstate", "Вернуть на работу"],
+        ["Ishdan haydalgan", "Dismissed", "Уволен"],
+        ["Haydalganlar", "Dismissed", "Уволенные"],
+        ["Ishdan haydalgan ustoz yo'q.", "No dismissed teachers.", "Уволенных преподавателей нет."],
+        ["Ustoz ishdan haydaldi.", "Teacher dismissed.", "Преподаватель уволен."],
+        ["Ustoz ishga qaytarildi.", "Teacher reinstated.", "Преподаватель возвращён на работу."],
+        ["Ishdan haydalgan ustoz ustozlar saytida hech narsa qila olmaydi. Uning kurslari va o'quvchilarining ballari saqlanib qoladi.", "A dismissed teacher can't do anything on the teacher site. Their courses and students' points are kept.", "Уволенный преподаватель ничего не может делать на сайте преподавателей. Его курсы и баллы учеников сохраняются."],
         ["Adminlar", "Admins", "Администраторы"],
         ["Admin qo'shish", "Add admin", "Добавить администратора"],
         ["Admin o'chirildi.", "Admin removed.", "Администратор удалён."],
@@ -690,6 +698,8 @@ const MANAGER_EMAIL = 'bunedniyazov2014@gmail.com';
         ["Admin qo'shildi.", "Admin added.", "Администратор добавлен."],
         ["Xodim o'chirildi.", "Staff member removed.", "Сотрудник удалён."],
         ["Ruxsat yo'q: Firestore Rules'ni yangilang (firestore.rules).", "Access denied: update Firestore Rules (firestore.rules).", "Нет доступа: обновите Firestore Rules (firestore.rules)."],
+        ["Siz ishdan haydalgansiz", "You have been dismissed", "Вы уволены"],
+        ["EduFlow menejeri sizni ustozlar safidan chiqargan. Kurs yaratish, ball berish va davomat endi yopiq. Savollar bo'lsa, EduFlow bilan bog'laning.", "The EduFlow manager has removed you from the teachers. Creating courses, giving points and attendance are now closed. Contact EduFlow if you have questions.", "Менеджер EduFlow исключил вас из числа преподавателей. Создание курсов, баллы и посещаемость закрыты. Если есть вопросы, свяжитесь с EduFlow."],
         ["Akkauntingiz o'chirilgan", "Your account has been deleted", "Ваш аккаунт удалён"],
         ["Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.", "This teacher account was deleted by an EduFlow manager. Contact EduFlow if you have questions.", "Этот аккаунт преподавателя удалён менеджером EduFlow. Если есть вопросы, свяжитесь с EduFlow."],
         ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],

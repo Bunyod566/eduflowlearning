@@ -628,9 +628,9 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
         }
         function vPending() {
             if (prof.approval === 'deleted') return `<div class="max-w-xl mx-auto py-10 text-center">
-                <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center bg-slate-200 dark:bg-gray-700"><i class="fa-solid fa-user-slash text-slate-600 dark:text-gray-300 text-3xl"></i></div>
-                <h1 class="fd text-2xl font-bold mt-5">Akkauntingiz o'chirilgan</h1>
-                <p class="text-slate-500 dark:text-gray-400 mt-3">Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.</p></div>`;
+                <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center bg-slate-200 dark:bg-gray-700"><i class="fa-solid fa-user-xmark text-slate-600 dark:text-gray-300 text-3xl"></i></div>
+                <h1 class="fd text-2xl font-bold mt-5">Siz ishdan haydalgansiz</h1>
+                <p class="text-slate-500 dark:text-gray-400 mt-3">EduFlow menejeri sizni ustozlar safidan chiqargan. Kurs yaratish, ball berish va davomat endi yopiq. Savollar bo'lsa, EduFlow bilan bog'laning.</p></div>`;
             const rej = prof.approval === 'rejected';
             return `<div class="max-w-xl mx-auto py-10 text-center">
                 <div class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${rej ? 'bg-rose-100 dark:bg-rose-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}">
@@ -1048,6 +1048,8 @@ let fbApp, auth, db, inited = false, authReady = false, adminMsg = '';
            kurs nomlari, alert/confirm, placeholder) avtomatik tarjima qiladi. */
 (function () {
     const D = [
+        ["Siz ishdan haydalgansiz", "You have been dismissed", "Вы уволены"],
+        ["EduFlow menejeri sizni ustozlar safidan chiqargan. Kurs yaratish, ball berish va davomat endi yopiq. Savollar bo'lsa, EduFlow bilan bog'laning.", "The EduFlow manager has removed you from the teachers. Creating courses, giving points and attendance are now closed. Contact EduFlow if you have questions.", "Менеджер EduFlow исключил вас из числа преподавателей. Создание курсов, баллы и посещаемость закрыты. Если есть вопросы, свяжитесь с EduFlow."],
         ["Akkauntingiz o'chirilgan", "Your account has been deleted", "Ваш аккаунт удалён"],
         ["Bu ustoz akkaunti EduFlow menejeri tomonidan o'chirilgan. Savollar bo'lsa, EduFlow bilan bog'laning.", "This teacher account was deleted by an EduFlow manager. Contact EduFlow if you have questions.", "Этот аккаунт преподавателя удалён менеджером EduFlow. Если есть вопросы, свяжитесь с EduFlow."],
         ["Hammasiga ball qo'shish", "Add points to everyone", "Начислить баллы всем"],
